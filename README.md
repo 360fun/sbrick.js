@@ -13,7 +13,7 @@ You must have a SBrick or SBrick Plus in order to use this library with your Leg
 ### Supported Firmware
 The currently supported firmware is 4.17, compatible with the [SBrick protocol 17](https://social.sbrick.com/wiki/view/pageId/11/slug/the-sbrick-ble-protocol).
 
-### Services Implemeted
+### Services Implemented
 Device information - 180a
 * Model number string
 * Firmware revision string
@@ -28,14 +28,18 @@ Remote control service - 4dc591b0-857c-41de-b5f1-15abda665b0c (partially)
 
 Quick Drive - 489a6ae0-c1ab-4c9c-bdb2-11d373c1b7fb
 
-### Services NOT Implemeted
+### Services NOT Implemented
 OTA service - 1d14d6ee-fd63-4fa1-bfa4-8f47b42119f0
 
 
 ### Usage
 
-	The SBrick name for the moment is required, the default one is "SBrick", otherwise the discovery will show all nearby devices.
-	SBrick.connect("SBrick")
+When you load the library an instance of the Class SBrick is automatically allocated and can be referenced with "SBrick".
+
+The SBrick name for the moment is required, by default should be "SBrick", if not specified the discovery popup will show all nearby Bluetooth devices.
+	
+	let SBRICKNAME = 'SBrick';
+	SBrick.connect(SBRICKNAME)
 	.then( ()=> {
 		// SBrick now is connected
 	} );
@@ -44,15 +48,45 @@ OTA service - 1d14d6ee-fd63-4fa1-bfa4-8f47b42119f0
 	.then( ()=> {
 		// SBrick now is disconnected
 	} );
-  
-	Drive the channel 0 (supposedly a motor) in clockwise at maximum (255) speed.
-	SBrick.drive(SBrick.CHANNEL0, SBrick.CW, SBrick.MAX);
+ 
+Check if the SBrick is connected:
 
-  
-	SBrick.disconnect()
+	SBrick.isConnected()
 	.then( ()=> {
 		// SBrick now is disconnected
 	} );
+
+Sending a command is pretty easy and some constants will help the process:
+
+	SBrick.CHANNEL0-3 // Channels 0 to 3
+	SBrick.CW-CCW     // Clockwise and Counterclockwise
+	SBrick.MIN        // Minimum power
+	SBrick.MAX	  // Maximum power for Drive (255)
+	SBrick.MAX_QD     // Maximum Power for QuickDrive (127): so the control is a bit less precise
+	SBrick.MAX_VOLT   // Battery Pack Voltage: normally is 9V
+	
+	
+To send a Drive command is pretty easy, are just needed: channel, direction and power.
+For example, the Channel 0 (supposedly a motor) drives in clockwise direction at the maximum (255) speed:
+
+	SBrick.drive( SBrick.CHANNEL0, SBrick.CW, SBrick.MAX );
+	
+QuickDrive permits to send up to 4 Drive commands at the same instant, without any delay between the channels.
+It accepts an Array of Objects (1 to 4) or a single Object (but better use Drive in that case).
+In the following example Channel 0 and 1 start to drive both in clockwise direction at the max speed:
+
+	SBrick.quickDrive( [
+		{ channel: SBrick.CHANNEL0, direction: SBrick.CW, power: SBrick.MAX }
+		{ channel: SBrick.CHANNEL1, direction: SBrick.CW, power: SBrick.MAX }
+	] );
+	
+Stop a specific Channel.
+	
+	SBrick.stop( SBrick.CHANNEL0 ); //stops Channel 0
+	
+Stop all Channels at once.
+	
+	SBrick.stopAll();
 
   
 ### Limitations
