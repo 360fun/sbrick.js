@@ -1,5 +1,5 @@
 # sbrick.js
-JavaScript library for control SBrick (a Lego® Power Functions compatible Bluetooth controller) through Web Bluetooth APIs.
+JavaScript library to control SBrick (a [Lego® Power Functions](https://www.lego.com/en-us/powerfunctions) compatible Bluetooth controller) through [Web Bluetooth APIs](https://www.w3.org/community/web-bluetooth/).
 
 ### Requirements
 Check your [browser and platform implementation status](https://github.com/WebBluetoothCG/web-bluetooth/blob/gh-pages/implementation-status.md) first.
@@ -56,6 +56,24 @@ Check if the SBrick is connected:
 		// SBrick now is disconnected
 	} );
 
+Get basic SBrick Informations:
+
+	SBrick.getModelNumber().then( model => {
+		alert( model );
+	});
+	SBrick.getFirmwareVersion().then( version => {
+		alert( version );
+	});
+	SBrick.getHardwareVersion().then( version => {
+		alert( version );
+	});
+	SBrick.getSoftwareVersion().then( version => {
+		alert( version );
+	});
+	SBrick.getManufacturerName().then( version => {
+		alert( version );
+	});
+	
 Sending a command is pretty easy and some constants will help the process:
 
 	SBrick.CHANNEL0-3 // Channels 0 to 3
@@ -64,6 +82,23 @@ Sending a command is pretty easy and some constants will help the process:
 	SBrick.MAX	  // Maximum power for Drive (255)
 	SBrick.MAX_QD     // Maximum Power for QuickDrive (127): so the control is a bit less precise
 	SBrick.MAX_VOLT   // Battery Pack Voltage: normally is 9V
+
+
+Get the Battery voltage:
+
+	SBrick.getBattery()
+	.then( battery => {
+		alert( battery + '%' );
+	} );
+
+
+Get the SBrick internal Temperature:
+
+	let fahrenheit = true-false; // default is false: C°
+	SBrick.getTemp(fahrenheit)
+	.then(temp => {
+		alert( temp + fahrenheit ? ' F°' : ' C°' );
+	});
 	
 	
 To send a Drive command is pretty easy, are just needed: channel, direction and power.
@@ -87,7 +122,7 @@ Stop a specific Channel.
 Stop all Channels at once.
 	
 	SBrick.stopAll();
-
+	
   
 ### Limitations
 SBrick Plus works with the same protocol of SBrick so it will supposedly work but it will leak of the ability to read input values. Right now I don't own an SBrick Plus so you have to wait for this functionality.
@@ -98,4 +133,4 @@ I tried my best to manage errors but there's more work to be done.
 ### Support or Contact
 Francesco Marino - [francesco@360fun.net](mailto:francesco@360fun.net) - [www.360fun.net](http://www.360fun.net)
 
-[SBrick](https://www.sbrick.com/)
+[Vengit Limited](https://www.vengit.com/) - [SBrick](https://www.sbrick.com/)
