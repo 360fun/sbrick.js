@@ -15,7 +15,7 @@ You must have a SBrick or SBrick Plus in order to use this library with your Leg
 ### Supported Firmware
 The currently supported firmware is 4.17, compatible with the [SBrick protocol 17](https://social.sbrick.com/wiki/view/pageId/11/slug/the-sbrick-ble-protocol).
 
-### Services Implemented
+### Services
 Device information - 180a
 * Model number string
 * Firmware revision string
@@ -23,15 +23,14 @@ Device information - 180a
 * Software revision string
 * Manufacturer string
 
-Remote control service - 4dc591b0-857c-41de-b5f1-15abda665b0c (partially)
+Remote control service - 4dc591b0-857c-41de-b5f1-15abda665b0c (**partially implemented**)
 * 00 Break
 * 01 Drive
 * 0F Query ADC (Temperature & Voltage)
 
 Quick Drive - 489a6ae0-c1ab-4c9c-bdb2-11d373c1b7fb
 
-### Services NOT Implemented
-OTA service - 1d14d6ee-fd63-4fa1-bfa4-8f47b42119f0
+OTA service - 1d14d6ee-fd63-4fa1-bfa4-8f47b42119f0 (**NOT implemented**)
 
 
 ### Usage
@@ -53,10 +52,7 @@ The SBrick name for the moment is required, by default should be "SBrick", if no
  
 Check if the SBrick is connected:
 
-	SBrick.isConnected()
-	.then( ()=> {
-		// SBrick now is disconnected
-	} );
+	SBrick.isConnected(); // returns true or false
 
 Get basic SBrick Informations:
 
