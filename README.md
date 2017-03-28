@@ -1,6 +1,8 @@
 # sbrick.js
 JavaScript library to control SBrick (a [Lego® Power Functions](https://www.lego.com/en-us/powerfunctions) compatible Bluetooth controller) through [Web Bluetooth APIs](https://www.w3.org/community/web-bluetooth/).
 
+Project page: [sbrick.360fun.net](http://sbrick.360fun.net/)
+
 ### Requirements
 Check your [browser and platform implementation status](https://github.com/WebBluetoothCG/web-bluetooth/blob/gh-pages/implementation-status.md) first.
 
