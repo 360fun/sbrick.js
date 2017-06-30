@@ -543,16 +543,18 @@ let SBrick = (function() {
 		}
 
 		_volt() {
-			return this._adc(CMD_ADC_VOLT).then( volt => {
+			return this._adc(CMD_ADC_VOLT).then( data => {
+					let volt = data.getInt16( 0, true );
 					return parseFloat( volt * 0.83875 / 2047.0 ); // V;
-			} )
+			} );
 		}
 
 
 		_temp() {
-			return this._adc(CMD_ADC_TEMP).then( temp => {
+			return this._adc(CMD_ADC_TEMP).then( data => {
+					let temp = data.getInt16( 0, true );
 					return parseFloat(temp / 118.85795 - 160); // °C;
-			} )
+			} );
 		}
 
 		/**
