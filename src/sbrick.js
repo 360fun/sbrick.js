@@ -393,6 +393,44 @@ let SBrick = (function() {
 			});
 		}
 
+		/**
+		* Read sensor data on a specific PORT
+		* @param {hexadecimal} port - PORT[0-3]
+		* @param {string} type - not implemented yet - in the future it will manage different sensor types (distance, tilt ...)
+		* @returns {promise} - sensor measurement Object (structure depends on the sensor type)
+		*/
+		getSensor( port, type ) {
+			return new Promise( (resolve, reject) => {
+				if( port!=null ) {
+					resolve();
+				} else {
+					reject('wrong input');
+				}
+			} ).then( ()=> {
+				return this._pvm( { port:port, mode:INPUT } );
+			}).then( ()=> {
+				let channels = this._getPortChannels(port);
+				return this._adc(channels).then( data => {
+					let arrayData = [];
+					for (let i = 0; i < data.byteLength; i+=2) {
+						arrayData.push(data.getInt16(i, true) >> 4);
+					}
+					let measurements = {};
+
+					// Sensor Type Management
+					switch(type) {
+						default:
+							measurements = {
+								ch0:      arrayData[0],
+								ch0_bin: (arrayData[0] >>> 0).toString(2),
+								ch1:      arrayData[1],
+								ch1_bin: (arrayData[1] >>> 0).toString(2)
+							}
+					}
+					return measurements;
+				} );
+			});
+		}
 
 		/**
 		* Helper function to invert CW in CCW and vice versa
