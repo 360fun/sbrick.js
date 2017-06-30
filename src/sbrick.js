@@ -203,7 +203,9 @@ let SBrick = (function() {
 			.catch( e => { this._error(e) } );
     }
 
-
+		/**
+		* Disconnect the SBrick
+		*/
 		disconnect() {
 			return new Promise( (resolve, reject) => {
 					if( this.isConnected() ) {
@@ -439,6 +441,15 @@ let SBrick = (function() {
 		invDir( direction ) {
 			return direction ? CLOCKWISE : COUNTERCLOCKWISE;
 		}
+
+
+		// PRIVATE FUNCTIONS
+
+		/**
+		* Read some common Blutooth devices informations about the SBrick
+		* @param {hexadecimal|string} uuid_characteristic
+		* @returns {promise}
+		*/
 		_deviceInfo( uuid_characteristic ) {
 			return new Promise( (resolve, reject) => {
 				if( typeof this.SERVICES[UUID_SERVICE_DEVICEINFORMATION].characteristics[uuid_characteristic] != 'undefined' ) {
@@ -459,6 +470,10 @@ let SBrick = (function() {
 			})
 			.catch( e => { this._error(e) } );
 		}
+
+		/**
+		* Keep the connection alive, preventing the SBrick internal watchdog (500 millisec by default) to close it
+		*/
 		_keepalive() {
 			return setInterval( () => {
 				if( !this.isConnected() ) {
@@ -475,6 +490,13 @@ let SBrick = (function() {
 			}, 300);
 		}
 
+		/**
+		* Read the ADC sensor "variables" where each specific channel values are stored
+		* every PORT has 2 channels so use CHANNEL[0-7] to read sensor data
+		* the remaining 2 channels are for the chip TEMPERATURE (0x08) and battery VOLTAGE (0x09)
+		* @param {array} array_channels - an array of channels CHANNEL[0-7], TEMPERATURE or VOLTAGE
+		* @returns {promise} - voltage measurement
+		*/
 		_adc( array_channels ) {
 			return this.queue.add( () => {
 				let ports = Array.isArray(array_channels) ? array_channels : [array_channels];
@@ -542,6 +564,11 @@ let SBrick = (function() {
 			});
 		}
 
+
+		/**
+		* Get the SBrick battery voltage
+		* @returns {number} - voltage in Volts
+		*/
 		_volt() {
 			return this._adc(CMD_ADC_VOLT).then( data => {
 					let volt = data.getInt16( 0, true );
@@ -549,7 +576,10 @@ let SBrick = (function() {
 			} );
 		}
 
-
+		/**
+		* Get the SBrick internal temperature
+		* @returns {number} - temperature in Celsius
+		*/
 		_temp() {
 			return this._adc(CMD_ADC_TEMP).then( data => {
 					let temp = data.getInt16( 0, true );
@@ -566,6 +596,10 @@ let SBrick = (function() {
 			return [ CHANNEL[port*2], CHANNEL[port*2+1] ];
 		}
 
+		/**
+		* Error management
+		* @param {string} msg - message to print or throw
+		*/
 		_error( msg ) {
 			if(this._debug) {
 				console.debug(msg);
@@ -574,6 +608,10 @@ let SBrick = (function() {
 			}
 		}
 
+		/**
+		* Log
+		* @param {string} msg - message to print
+		*/
 		_log( msg ) {
 			if(this._debug) {
 				console.log(msg);
