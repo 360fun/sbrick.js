@@ -15,7 +15,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-(function() {
+let SBrick = (function() {
 	'use strict';
 
 	const ID_SBRICK                             = "SBrick";
@@ -74,7 +74,15 @@
 	// Sbrick class definition
 	class SBrick {
 
-		constructor() {
+		// CONSTRUCTOR
+
+		/**
+  	* Create a new instance of the SBrick class (and accordingly also WebBluetooth)
+  	* @param {string} sbrick_name - The name of the sbrick
+  	*/
+		constructor( sbrick_name ) {
+			this.webbluetooth = new WebBluetooth();
+
 			// export constants
 			this.CHANNEL0   = CHANNEL_0;
 			this.CHANNEL1   = CHANNEL_1;
@@ -84,6 +92,7 @@
 			this.CCW        = COUNTERCLOCKWISE;
 			this.MAX        = MAX;
 			this.SERVICES   = {}
+			this.NAME     = sbrick_name || "";
 
 			// status
       this.keepalive = null;
@@ -103,7 +112,13 @@
 			this._debug         = false;
     }
 
-		connect( sbrick_name ) {
+
+		// PUBLIC FUNCTIONS
+
+		/**
+		* Open the Web Bluetooth popup to search and connect the SBrick (filtered by name if previously specified)
+		*/
+		connect() {
 			this.SERVICES = {
 				[UUID_SERVICE_DEVICEINFORMATION] : {
 					name : "Device Information",
@@ -147,18 +162,18 @@
 
 			// if the SBrick name is not defined it shows all the devices
 			// I don't like this solution, would be better to filter "by services"
-			if( typeof sbrick_name !== 'undefined' ) {
+			if( this.NAME != "" ) {
 				options.filters = [{
-					namePrefix: [ sbrick_name ]
+					namePrefix: [ this.NAME ]
 				}];
 			} else {
 				options.acceptAllDevices = true;
 			}
-			return WebBluetooth.connect(options,this.SERVICES)
+			return this.webbluetooth.connect(options,this.SERVICES)
 			.then( () => {
 				if( this.isConnected() ) {
 					if( this._debug ) {
-						this._log( "Connected to SBrick " + WebBluetooth.device.id );
+						this._log( "Connected to SBrick " + this.webbluetooth.device.id );
 					}
 					// Firmware Compatibility Check
 					this.getFirmwareVersion()
@@ -186,7 +201,7 @@
 			} ).then( ()=> {
 				return this.stopAll().then( ()=>{
 					clearInterval( this.keepalive );
-					return WebBluetooth.disconnect();
+					return this.webbluetooth.disconnect();
 				} );
 			} )
 			.catch( e => { this._error(e) } );
@@ -194,28 +209,7 @@
 
 
 		isConnected() {
-			return WebBluetooth && WebBluetooth.isConnected();
-		}
-
-		_deviceInfo( uuid_characteristic ) {
-			return new Promise( (resolve, reject) => {
-				if( typeof this.SERVICES[UUID_SERVICE_DEVICEINFORMATION].characteristics[uuid_characteristic] != 'undefined' ) {
-					resolve();
-				} else {
-					reject('Wrong input');
-				}
-			} ).then( () => {
-				return WebBluetooth.readCharacteristicValue( uuid_characteristic )
-				.then(data => {
-					var str = "";
-					for (let i = 0; i < data.byteLength; i++) {
-						str += String.fromCharCode(data.getUint8(i));
-					}
-					return str;
-				})
-				.catch( e => { this._error(e) } );
-			})
-			.catch( e => { this._error(e) } );
+			return this.webbluetooth && this.webbluetooth.isConnected();
 		}
 
 		getModelNumber() {
@@ -267,7 +261,7 @@
 					this.channel[channel].busy = true;
 					this.queue.add( () => {
 						this.channel[channel].busy = false;
-						return WebBluetooth.writeCharacteristicValue(
+						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
 							new Uint8Array([ CMD_DRIVE, channels[channel], this.channel[channel].direction, this.channel[channel].power ])
 						) }
@@ -303,7 +297,7 @@
 						for(var i=0;i<4;i++) {
 							this.channel[i].busy = false;
 						}
-						return WebBluetooth.writeCharacteristicValue(
+						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_QUICKDRIVE,
 							new Uint8Array([
 								parseInt( parseInt(this.channel[0].power/MAX*MAX_QD).toString(2) + this.channel[0].direction, 2 ),
@@ -355,7 +349,7 @@
 				}
 
 				this.queue.add( () => {
-					return WebBluetooth.writeCharacteristicValue(
+					return this.webbluetooth.writeCharacteristicValue(
 						UUID_CHARACTERISTIC_REMOTECONTROL,
 						command
 					);
@@ -394,6 +388,26 @@
 		}
 
 
+		_deviceInfo( uuid_characteristic ) {
+			return new Promise( (resolve, reject) => {
+				if( typeof this.SERVICES[UUID_SERVICE_DEVICEINFORMATION].characteristics[uuid_characteristic] != 'undefined' ) {
+					resolve();
+				} else {
+					reject('Wrong input');
+				}
+			} ).then( () => {
+				return this.webbluetooth.readCharacteristicValue( uuid_characteristic )
+				.then(data => {
+					let str = "";
+					for (let i = 0 ; i < data.byteLength ; i++) {
+						str += String.fromCharCode(data.getUint8(i));
+					}
+					return str;
+				})
+				.catch( e => { this._error(e) } );
+			})
+			.catch( e => { this._error(e) } );
+		}
 		_keepalive() {
 			return setInterval( () => {
 				if( !this.isConnected() ) {
@@ -401,7 +415,7 @@
 					clearInterval( this.keepalive );
 				} else if( this.queue.getQueueLength() === 0 ) {
 					this.queue.add( () => {
-						return WebBluetooth.writeCharacteristicValue(
+						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
 							new Uint8Array( [ CMD_ADC, CMD_ADC_TEMP ] )
 						);
@@ -413,11 +427,11 @@
 
 		_adc( mode ) {
 			return this.queue.add( () => {
-				return WebBluetooth.writeCharacteristicValue(
+				return this.webbluetooth.writeCharacteristicValue(
 					UUID_CHARACTERISTIC_REMOTECONTROL,
 					new Uint8Array([CMD_ADC,mode])
 				).then(() => {
-					return WebBluetooth.readCharacteristicValue(UUID_CHARACTERISTIC_REMOTECONTROL)
+					return this.webbluetooth.readCharacteristicValue(UUID_CHARACTERISTIC_REMOTECONTROL)
 					.then(data => {
 						return data.getInt16( 0, true );
 					});
@@ -455,6 +469,6 @@
 
   }
 
-  window.SBrick = new SBrick();
+	return SBrick;
 
 })();
