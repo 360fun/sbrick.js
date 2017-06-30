@@ -54,6 +54,8 @@ let SBrick = (function() {
 	const CMD_ADC       = 0x0F; // Query ADC
 	const CMD_ADC_VOLT  = 0x08; // Get Voltage
 	const CMD_ADC_TEMP  = 0x09; // Get Temperature
+	const CMD_PVM       = 0x2C; // Periodic Voltage Measurements
+
 	// SBrick Ports / Channels
   const PORT    = [
 			0x00, // PORT0 (top-left)
@@ -252,6 +254,9 @@ let SBrick = (function() {
 					reject('Wrong input');
 				}
 			} )
+			.then( ()=> {
+				return this._pvm( { port:port, mode:OUTPUT } );
+			})
 			.then( () => {
 				this.ports[port].power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
 				this.ports[port].direction = direction ? COUNTERCLOCKWISE : CLOCKWISE;
@@ -279,8 +284,15 @@ let SBrick = (function() {
 					reject('Wrong input');
 				}
 			} )
+			.then( ()=> {
+				let array = [];
+				for(let i=0;i<4;i++) {
+					if( typeof array_ports[i] !== 'undefined' ) {
+						let port = array_ports[i].port;
+						array.push( { port: port, mode: OUTPUT } );
 					}
 				}
+				return this._pvm( array );
 			})
 			.then( ()=> {
 				for(let i=0;i<4;i++) {
@@ -323,11 +335,16 @@ let SBrick = (function() {
 					reject('wrong input');
 				}
 			} )
+			.then( ()=> {
+				let array = [];
+				for(let i=0;i<array_ports.length;i++) {
+					array.push( {
+						port: array_ports[i],
+						mode: OUTPUT
+					} );
 				}
-
-				// set motors power to 0 in the object
-				for(var i=0;i<channel.length;i++) {
-					this.channel[channel[i]].power = 0;
+				return this._pvm( array );
+			})
 			.then( ()=> {
 				if( !Array.isArray(array_ports) ) {
 					array_ports = [ array_ports ];
@@ -435,6 +452,57 @@ let SBrick = (function() {
 			});
 		}
 
+		/**
+		* Enable "Power Voltage Measurements" (five times a second) on a specific PORT (on both CHANNELS)
+		* the values are stored in internal SBrick variables, to read them use _adc()
+		* @param {array} array_ports - an array of port status objects { port: PORT[0-3], mode: INPUT-OUTPUT}
+		* @returns {promise} - undefined
+		*/
+		_pvm( array_ports ) {
+			return new Promise( (resolve, reject) => {
+				if( array_ports!=null ) {
+					resolve();
+				} else {
+					reject('wrong input');
+				}
+			} ).then( ()=> {
+				if( !Array.isArray(array_ports) ) {
+					array_ports = [ array_ports ];
+				}
+				let update_pvm = false;
+				for(let i=0;i<4;i++) {
+					if( typeof array_ports[i] !== 'undefined' ) {
+						let port = array_ports[i].port;
+						let mode = array_ports[i].mode;
+						if( this.ports[port].mode != mode ) {
+							this.ports[port].mode = mode;
+							update_pvm = true;
+						}
+					}
+				}
+				if(update_pvm) {
+					let command = [CMD_PVM];
+					let srt = "";
+					for(let i=0;i<4;i++) {
+						if(this.ports[i].mode==INPUT) {
+							let channels = this._getPortChannels(i);
+							command.push(channels[0]);
+							command.push(channels[1]);
+							srt += " PORT"+ i + " (CH" + channels[0] + " CH" + channels[1]+")";
+						}
+					}
+					return this.queue.add( () => {
+						return this.webbluetooth.writeCharacteristicValue(
+							UUID_CHARACTERISTIC_REMOTECONTROL,
+							new Uint8Array(command)
+						)
+						.then( () => {
+							this._log( "PVM set" + ( srt=="" ? " OFF" : srt ) );
+						});
+					});
+				}
+			});
+		}
 
 		_volt() {
 			return this._adc(CMD_ADC_VOLT).then( volt => {
