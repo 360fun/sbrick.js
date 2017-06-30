@@ -49,11 +49,11 @@ let SBrick = (function() {
 	const ERROR_STATE   = 0x88; // The system is in a state where the command does not make sense
 
 	// Commands
-	const CMD_BREAK      = 0x00; // Stop command
-	const CMD_DRIVE      = 0x01; // Drive command
-	const CMD_ADC        = 0x0F; // Query ADC
-	const CMD_ADC_VOLT   = 0x08; // Get Voltage
-	const CMD_ADC_TEMP   = 0x09; // Get Temperature
+	const CMD_BREAK     = 0x00; // Stop command
+	const CMD_DRIVE     = 0x01; // Drive command
+	const CMD_ADC       = 0x0F; // Query ADC
+	const CMD_ADC_VOLT  = 0x08; // Get Voltage
+	const CMD_ADC_TEMP  = 0x09; // Get Temperature
 	// SBrick Ports / Channels
   const PORT    = [
 			0x00, // PORT0 (top-left)
@@ -77,10 +77,10 @@ let SBrick = (function() {
 	const COUNTERCLOCKWISE = 0x01; // Counterclockwise
 
 	// Values limits
-	const MIN    = 0;   // No Speed
-	const MAX    = 255; // Max Speed
-	const MAX_QD = 127; // Max Speed for QuickDrive
-	const MAX_VOLT = 9; // Max Voltage = Full battery
+	const MIN      = 0;   // No Speed
+	const MAX      = 255; // Max Speed
+	const MAX_QD   = 127; // Max Speed for QuickDrive
+	const MAX_VOLT = 9;   // Max Voltage = Full battery
 
 	// Sbrick class definition
 	class SBrick {
@@ -95,15 +95,15 @@ let SBrick = (function() {
 			this.webbluetooth = new WebBluetooth();
 
 			// export constants
-			this.CW         = CLOCKWISE;
-			this.CCW        = COUNTERCLOCKWISE;
-			this.MAX        = MAX;
-			this.SERVICES   = {}
 			this.NAME     = sbrick_name || "";
 			this.PORT0    = PORT[0];
 			this.PORT1    = PORT[1];
 			this.PORT2    = PORT[2];
 			this.PORT3    = PORT[3];
+			this.CW       = CLOCKWISE;
+			this.CCW      = COUNTERCLOCKWISE;
+			this.MAX      = MAX;
+			this.SERVICES = {}
 
 			// status
       this.keepalive = null;
@@ -192,7 +192,7 @@ let SBrick = (function() {
 						if( parseFloat(version) >= FIRMWARE_COMPATIBILITY ) {
 							this.keepalive = this._keepalive(this);
 						} else {
-							this._log("Firmware not compatible: please update your SBrick.");
+							this._error("Firmware not compatible: please update your SBrick.");
 							this.disconnect();
 						}
 					});
@@ -224,33 +224,23 @@ let SBrick = (function() {
 		}
 
 		getModelNumber() {
-			return this._deviceInfo(UUID_CHARACTERISTIC_MODELNUMBER).then( model => {
-					return model;
-			} )
+			return this._deviceInfo(UUID_CHARACTERISTIC_MODELNUMBER);
 		}
 
 		getFirmwareVersion() {
-			return this._deviceInfo(UUID_CHARACTERISTIC_FIRMWAREREVISION).then( version => {
-					return version;
-			} )
+			return this._deviceInfo(UUID_CHARACTERISTIC_FIRMWAREREVISION);
 		}
 
 		getHardwareVersion() {
-			return this._deviceInfo(UUID_CHARACTERISTIC_HARDWAREREVISION).then( version => {
-					return version;
-			} )
+			return this._deviceInfo(UUID_CHARACTERISTIC_HARDWAREREVISION);
 		}
 
 		getSoftwareVersion() {
-			return this._deviceInfo(UUID_CHARACTERISTIC_SOFTWAREREVISION).then( version => {
-					return version;
-			} )
+			return this._deviceInfo(UUID_CHARACTERISTIC_SOFTWAREREVISION);
 		}
 
 		getManufacturerName() {
-			return this._deviceInfo(UUID_CHARACTERISTIC_MANUFACTURERNAME).then( version => {
-					return version;
-			} )
+			return this._deviceInfo(UUID_CHARACTERISTIC_MANUFACTURERNAME);
 		}
 
 
