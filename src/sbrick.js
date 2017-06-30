@@ -54,18 +54,25 @@ let SBrick = (function() {
 	const CMD_ADC        = 0x0F; // Query ADC
 	const CMD_ADC_VOLT   = 0x08; // Get Voltage
 	const CMD_ADC_TEMP   = 0x09; // Get Temperature
+	// SBrick Ports / Channels
+  const PORT    = [
+			0x00, // PORT0 (top-left)
+			0x01, // PORT1 (bottom-left)
+			0x02, // PORT2 (top-right)
+			0x03  // PORT3 (bottom-right)
+	];
+	const CHANNEL = [
+		0x00, 0x01, // PORT0 channels
+		0x02, 0x03, // PORT1 channels
+		0x04, 0x05, // PORT2 channels
+		0x06, 0x07  // PORT3 channels
+	];
 
-	// Channels
-	const CHANNEL_0 = 0x00; // Top-Left Channel
-	const CHANNEL_1 = 0x01; // Bottom-Left Channel
-	const CHANNEL_2 = 0x02; // Top-Right Channel
-	const CHANNEL_3 = 0x03; // Bottom-Right Channel
-
-	// Directions
 	// Port Mode
 	const INPUT  = 'input';
 	const OUTPUT = 'output';
 
+	// Direction
 	const CLOCKWISE        = 0x00; // Clockwise
 	const COUNTERCLOCKWISE = 0x01; // Counterclockwise
 
@@ -88,19 +95,19 @@ let SBrick = (function() {
 			this.webbluetooth = new WebBluetooth();
 
 			// export constants
-			this.CHANNEL0   = CHANNEL_0;
-			this.CHANNEL1   = CHANNEL_1;
-			this.CHANNEL2   = CHANNEL_2;
-			this.CHANNEL3   = CHANNEL_3;
 			this.CW         = CLOCKWISE;
 			this.CCW        = COUNTERCLOCKWISE;
 			this.MAX        = MAX;
 			this.SERVICES   = {}
 			this.NAME     = sbrick_name || "";
+			this.PORT0    = PORT[0];
+			this.PORT1    = PORT[1];
+			this.PORT2    = PORT[2];
+			this.PORT3    = PORT[3];
 
 			// status
       this.keepalive = null;
-			this.channel   = [
+			this.ports     = [
 				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
 				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
 				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
@@ -247,27 +254,25 @@ let SBrick = (function() {
 		}
 
 
-		drive( channel, direction, power ) {
+		drive( port, direction, power ) {
 			return new Promise( (resolve, reject) => {
-				if( channel!=null && direction!=null && power!=null ) {
+				if( PORT.indexOf(port)!=-1 && direction!=null && power!=null ) {
 					resolve();
 				} else {
 					reject('Wrong input');
 				}
-			} ).then( () => {
-				let channels    = [CHANNEL_0,CHANNEL_1,CHANNEL_2,CHANNEL_3];
-				let directions = [CLOCKWISE,COUNTERCLOCKWISE];
+			} )
+			.then( () => {
+				this.ports[port].power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
+				this.ports[port].direction = direction ? COUNTERCLOCKWISE : CLOCKWISE;
 
-				this.channel[channel].power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
-				this.channel[channel].direction = directions[direction];
-
-				if( !this.channel[channel].busy ) {
-					this.channel[channel].busy = true;
+				if( !this.ports[port].busy ) {
+					this.ports[port].busy = true;
 					this.queue.add( () => {
-						this.channel[channel].busy = false;
+						this.ports[port].busy = false;
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
-							new Uint8Array([ CMD_DRIVE, channels[channel], this.channel[channel].direction, this.channel[channel].power ])
+							new Uint8Array([ CMD_DRIVE, PORT[port], this.ports[port].direction, this.ports[port].power ])
 						) }
 					);
 				}
@@ -276,39 +281,42 @@ let SBrick = (function() {
 		}
 
 
-		quickDrive( channel_array ) {
+		quickDrive( array_ports ) {
 			return new Promise( (resolve, reject) => {
-				if( channel_array!=null || Array.isArray(channel_array) ) {
+				if( array_ports!=null || Array.isArray(array_ports) ) {
 					resolve();
 				} else {
 					reject('Wrong input');
 				}
-			} ).then( ()=> {
-
-				for(var i=0;i<4;i++) {
-					if( typeof channel_array[i] !== 'undefined' ) {
-						var channel = parseInt( channel_array[i].channel );
-						this.channel[channel].power     = Math.min(Math.max(parseInt(Math.abs(channel_array[i].power)), MIN), MAX);
-						this.channel[channel].direction = channel_array[i].direction ? COUNTERCLOCKWISE : CLOCKWISE;
+			} )
 					}
 				}
-
-				if( !this.channel[0].busy && !this.channel[1].busy && !this.channel[2].busy && !this.channel[3].busy ) {
-					for(var i=0;i<4;i++) {
-						this.channel[i].busy = true;
+			})
+			.then( ()=> {
+				for(let i=0;i<4;i++) {
+					if( typeof array_ports[i] !== 'undefined' ) {
+						let port = parseInt( array_ports[i].port );
+						this.ports[port].power     = Math.min(Math.max(parseInt(Math.abs(array_ports[i].power)), MIN), MAX);
+						this.ports[port].direction = array_ports[i].direction ? COUNTERCLOCKWISE : CLOCKWISE;
+					}
+				}
+				if( !this.ports[0].busy && !this.ports[1].busy && !this.ports[2].busy && !this.ports[3].busy ) {
+					for(let i=0;i<4;i++) {
+						this.ports[i].busy = true;
 					}
 					this.queue.add( () => {
-						for(var i=0;i<4;i++) {
-							this.channel[i].busy = false;
+						let command = [];
+						for(let i=0;i<4;i++) {
+							this.ports[i].busy = false;
+							if( this.ports[i].mode==OUTPUT ) {
+								command.push( parseInt( parseInt(this.ports[i].power/MAX*MAX_QD).toString(2) + this.ports[i].direction, 2 ) );
+							} else {
+								command.push( null );
+							}
 						}
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_QUICKDRIVE,
-							new Uint8Array([
-								parseInt( parseInt(this.channel[0].power/MAX*MAX_QD).toString(2) + this.channel[0].direction, 2 ),
-								parseInt( parseInt(this.channel[1].power/MAX*MAX_QD).toString(2) + this.channel[1].direction, 2 ),
-								parseInt( parseInt(this.channel[2].power/MAX*MAX_QD).toString(2) + this.channel[2].direction, 2 ),
-								parseInt( parseInt(this.channel[3].power/MAX*MAX_QD).toString(2) + this.channel[3].direction, 2 )
-							])
+							new Uint8Array( command )
 						) }
 					);
 				}
@@ -317,55 +325,42 @@ let SBrick = (function() {
 		}
 
 
-		stop( channel ) {
+		stop( array_ports ) {
 			return new Promise( (resolve, reject) => {
-				if( channel!=null ) {
+				if( array_ports!=null ) {
 					resolve();
 				} else {
 					reject('wrong input');
 				}
-			} ).then( ()=> {
-
-				let command = null;
-
-				if( !Array.isArray(channel) ) {
-					channel = [ channel ];
+			} )
 				}
 
 				// set motors power to 0 in the object
 				for(var i=0;i<channel.length;i++) {
 					this.channel[channel[i]].power = 0;
+			.then( ()=> {
+				if( !Array.isArray(array_ports) ) {
+					array_ports = [ array_ports ];
 				}
-
-				switch( channel.length ) {
-					default:
-						command = new Uint8Array([ CMD_BREAK, channel[0] ]);
-						break;
-					case 2:
-						command = new Uint8Array([ CMD_BREAK,channel[0], channel[1] ]);
-						break;
-					case 3:
-						command = new Uint8Array([ CMD_BREAK, channel[0], channel[1], channel[2] ]);
-						break;
-					case 4:
-						command = new Uint8Array([ CMD_BREAK, channel[0], channel[1], channel[2], channel[3] ]);
-						break;
+				let command = [ CMD_BREAK ];
+				// update object values and build the command
+				for(let i=0;i<array_ports.length;i++) {
+					this.ports[array_ports[i]].power = 0;
+					command.push(array_ports[i]);
 				}
-
 				this.queue.add( () => {
 					return this.webbluetooth.writeCharacteristicValue(
 						UUID_CHARACTERISTIC_REMOTECONTROL,
-						command
+						new Uint8Array( command )
 					);
 				});
-
 			} )
 			.catch( e => { this._error(e) } );
 		}
 
 
 		stopAll() {
-			return this.stop([ CHANNEL_0, CHANNEL_1, CHANNEL_2, CHANNEL_3 ]);
+			return this.stop([ PORT[0], PORT[1], PORT[2], PORT[3] ]);
 		}
 
 
@@ -428,16 +423,16 @@ let SBrick = (function() {
 			}, 300);
 		}
 
-
-		_adc( mode ) {
+		_adc( array_channels ) {
 			return this.queue.add( () => {
+				let ports = Array.isArray(array_channels) ? array_channels : [array_channels];
 				return this.webbluetooth.writeCharacteristicValue(
 					UUID_CHARACTERISTIC_REMOTECONTROL,
-					new Uint8Array([CMD_ADC,mode])
+					new Uint8Array([CMD_ADC].concat(ports))
 				).then(() => {
 					return this.webbluetooth.readCharacteristicValue(UUID_CHARACTERISTIC_REMOTECONTROL)
 					.then(data => {
-						return data.getInt16( 0, true );
+						return data;
 					});
 				});
 			});
@@ -455,6 +450,15 @@ let SBrick = (function() {
 			return this._adc(CMD_ADC_TEMP).then( temp => {
 					return parseFloat(temp / 118.85795 - 160); // °C;
 			} )
+		}
+
+		/**
+		* Helper function to find a port channel numbers
+		* @param {hexadecimal} port
+		* @returns {array} - hexadecimal numbers of both channels
+		*/
+		_getPortChannels( port ) {
+			return [ CHANNEL[port*2], CHANNEL[port*2+1] ];
 		}
 
 		_error( msg ) {
