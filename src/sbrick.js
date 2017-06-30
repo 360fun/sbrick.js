@@ -62,6 +62,10 @@ let SBrick = (function() {
 	const CHANNEL_3 = 0x03; // Bottom-Right Channel
 
 	// Directions
+	// Port Mode
+	const INPUT  = 'input';
+	const OUTPUT = 'output';
+
 	const CLOCKWISE        = 0x00; // Clockwise
 	const COUNTERCLOCKWISE = 0x01; // Counterclockwise
 
@@ -97,10 +101,10 @@ let SBrick = (function() {
 			// status
       this.keepalive = null;
 			this.channel   = [
-				{ power: MIN, direction: CLOCKWISE, busy: false },
-				{ power: MIN, direction: CLOCKWISE, busy: false },
-				{ power: MIN, direction: CLOCKWISE, busy: false },
-				{ power: MIN, direction: CLOCKWISE, busy: false }
+				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
+				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
+				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
+				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false }
 			];
 
 			// queue
