@@ -377,6 +377,13 @@ let SBrick = (function() {
 		}
 
 
+		/**
+		* Helper function to invert CW in CCW and vice versa
+		* @param {hex number} direction
+		*/
+		invDir( direction ) {
+			return direction ? CLOCKWISE : COUNTERCLOCKWISE;
+		}
 		_deviceInfo( uuid_characteristic ) {
 			return new Promise( (resolve, reject) => {
 				if( typeof this.SERVICES[UUID_SERVICE_DEVICEINFORMATION].characteristics[uuid_characteristic] != 'undefined' ) {
