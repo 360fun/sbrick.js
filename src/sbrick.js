@@ -320,7 +320,7 @@ let SBrick = (function() {
 		*/
 		quickDrive( array_ports ) {
 			return new Promise( (resolve, reject) => {
-				if( array_ports !== null && Array.isArray(array_ports) ) {
+				if( Array.isArray(array_ports) ) {
 					resolve();
 				} else {
 					reject('Wrong input');
