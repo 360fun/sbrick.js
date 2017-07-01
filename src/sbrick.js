@@ -22,7 +22,7 @@ let SBrick = (function() {
 	const FIRMWARE_COMPATIBILITY                = 4.17;
 
 	const UUID_SERVICE_DEVICEINFORMATION        = "device_information";
-  const UUID_CHARACTERISTIC_MODELNUMBER       = "model_number_string";
+	const UUID_CHARACTERISTIC_MODELNUMBER       = "model_number_string";
 	const UUID_CHARACTERISTIC_FIRMWAREREVISION  = "firmware_revision_string";
 	const UUID_CHARACTERISTIC_HARDWAREREVISION  = "hardware_revision_string";
 	const UUID_CHARACTERISTIC_SOFTWAREREVISION  = "software_revision_string";
@@ -57,7 +57,7 @@ let SBrick = (function() {
 	const CMD_PVM       = 0x2C; // Periodic Voltage Measurements
 
 	// SBrick Ports / Channels
-  const PORT    = [
+	const PORT    = [
 			0x00, // PORT0 (top-left)
 			0x01, // PORT1 (bottom-left)
 			0x02, // PORT2 (top-right)
@@ -90,9 +90,9 @@ let SBrick = (function() {
 		// CONSTRUCTOR
 
 		/**
-  	* Create a new instance of the SBrick class (and accordingly also WebBluetooth)
-  	* @param {string} sbrick_name - The name of the sbrick
-  	*/
+		* Create a new instance of the SBrick class (and accordingly also WebBluetooth)
+		* @param {string} sbrick_name - The name of the sbrick
+		*/
 		constructor( sbrick_name ) {
 			this.webbluetooth = new WebBluetooth();
 
@@ -108,7 +108,7 @@ let SBrick = (function() {
 			this.SERVICES = {}
 
 			// status
-      this.keepalive = null;
+			this.keepalive = null;
 			this.ports     = [
 				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
 				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
@@ -123,13 +123,14 @@ let SBrick = (function() {
 
 			// debug
 			this._debug         = false;
-    }
+		}
 
 
 		// PUBLIC FUNCTIONS
 
 		/**
 		* Open the Web Bluetooth popup to search and connect the SBrick (filtered by name if previously specified)
+			* @returns {promise returning undefined}
 		*/
 		connect() {
 			this.SERVICES = {
@@ -191,6 +192,7 @@ let SBrick = (function() {
 					// Firmware Compatibility Check
 					this.getFirmwareVersion()
 					.then( version => {
+						// version = FIRMWARE_COMPATIBILITY;
 						if( parseFloat(version) >= FIRMWARE_COMPATIBILITY ) {
 							this.keepalive = this._keepalive(this);
 						} else {
@@ -201,10 +203,11 @@ let SBrick = (function() {
 				}
 			})
 			.catch( e => { this._error(e) } );
-    }
+		}
 
 		/**
 		* Disconnect the SBrick
+		* @returns {promise returning undefined}
 		*/
 		disconnect() {
 			return new Promise( (resolve, reject) => {
@@ -223,34 +226,65 @@ let SBrick = (function() {
 		}
 
 
+		/**
+		* check if the SBrick is connected to the browser
+		* @returns {boolean}
+		*/
 		isConnected() {
 			return this.webbluetooth && this.webbluetooth.isConnected();
 		}
 
+		/**
+		* get the SBrick's model number
+		* @returns {promise returning string}
+		*/
 		getModelNumber() {
 			return this._deviceInfo(UUID_CHARACTERISTIC_MODELNUMBER);
 		}
 
+		/**
+		* get the SBrick's firmware version
+		* @returns {promise returning string}
+		*/
 		getFirmwareVersion() {
 			return this._deviceInfo(UUID_CHARACTERISTIC_FIRMWAREREVISION);
 		}
 
+		/**
+		* get the SBrick's hardware version
+		* @returns {promise returning string}
+		*/
 		getHardwareVersion() {
 			return this._deviceInfo(UUID_CHARACTERISTIC_HARDWAREREVISION);
 		}
 
+		/**
+		* get the SBrick's software version
+		* @returns {promise returning string}
+		*/
 		getSoftwareVersion() {
 			return this._deviceInfo(UUID_CHARACTERISTIC_SOFTWAREREVISION);
 		}
 
+		/**
+		* get the SBrick's manufacturer's name
+		* @returns {promise returning string}
+		*/
 		getManufacturerName() {
 			return this._deviceInfo(UUID_CHARACTERISTIC_MANUFACTURERNAME);
 		}
 
 
+		/**
+		* send drive command
+		* @param {number} port - The index (0-3) of the port to update in the this.ports array
+		* @param {hexadecimal number} direction - The drive direction (0x00, 0x01 - you can use the constants SBrick.CLOCKWISE and SBrick.COUNTERCLOCKWISE)
+		* @param {number} power - The power level for the drive command 0-255
+		* @returns {promise}
+		*/
 		drive( port, direction, power ) {
 			return new Promise( (resolve, reject) => {
-				if( PORT.indexOf(port)!=-1 && direction!=null && power!=null ) {
+				if( PORT.indexOf(port) !== -1 && direction !== null && power !== null ) {
 					resolve();
 				} else {
 					reject('Wrong input');
@@ -278,9 +312,15 @@ let SBrick = (function() {
 		}
 
 
+		/**
+		* send quickDrive command
+		* @param {array} array_ports - An array with a settings object {port, direction, power}
+										for every port you want to update
+		* @returns {undefined}
+		*/
 		quickDrive( array_ports ) {
 			return new Promise( (resolve, reject) => {
-				if( array_ports!=null || Array.isArray(array_ports) ) {
+				if( array_ports !== null && Array.isArray(array_ports) ) {
 					resolve();
 				} else {
 					reject('Wrong input');
@@ -312,7 +352,7 @@ let SBrick = (function() {
 						let command = [];
 						for(let i=0;i<4;i++) {
 							this.ports[i].busy = false;
-							if( this.ports[i].mode==OUTPUT ) {
+							if( this.ports[i].mode===OUTPUT ) {
 								command.push( parseInt( parseInt(this.ports[i].power/MAX*MAX_QD).toString(2) + this.ports[i].direction, 2 ) );
 							} else {
 								command.push( null );
@@ -329,9 +369,14 @@ let SBrick = (function() {
 		}
 
 
+		/**
+		* stop a port
+		* @param {number | array} array_ports - The number or array of numbers of channels to stop
+		* @returns {promise}
+		*/
 		stop( array_ports ) {
 			return new Promise( (resolve, reject) => {
-				if( array_ports!=null ) {
+				if( array_ports!==null ) {
 					resolve();
 				} else {
 					reject('wrong input');
@@ -368,11 +413,19 @@ let SBrick = (function() {
 		}
 
 
+		/**
+		* stop all ports
+		* @returns {promise}
+		*/
 		stopAll() {
 			return this.stop([ PORT[0], PORT[1], PORT[2], PORT[3] ]);
 		}
 
 
+		/**
+		* get battery percentage
+		* @returns {promise returning number}
+		*/
 		getBattery() {
 			return this._volt()
 			.then( volt => {
@@ -381,7 +434,12 @@ let SBrick = (function() {
 		}
 
 
-		getTemp( fahrenheit ) {
+		/**
+		* get sbrick's temperature in degrees Celsius (default) or Fahrenheit
+		* @param {boolean} fahrenheit - If true, temperature is returned in Fahrenheit
+		* @returns {promise returning number}
+		*/
+		getTemp( fahrenheit = false) {
 			return this._temp()
 			.then( temp => {
 				let result = 0;
@@ -403,12 +461,12 @@ let SBrick = (function() {
 		*/
 		getSensor( port, type ) {
 			return new Promise( (resolve, reject) => {
-				if( port!=null ) {
+				if( port !== null ) {
 					resolve();
 				} else {
 					reject('wrong input');
 				}
-			} ).then( ()=> {
+			}).then( ()=> {
 				return this._pvm( { port:port, mode:INPUT } );
 			}).then( ()=> {
 				let channels = this._getPortChannels(port);
@@ -520,7 +578,7 @@ let SBrick = (function() {
 		*/
 		_pvm( array_ports ) {
 			return new Promise( (resolve, reject) => {
-				if( array_ports!=null ) {
+				if( array_ports !== null ) {
 					resolve();
 				} else {
 					reject('wrong input');
@@ -534,6 +592,7 @@ let SBrick = (function() {
 					if( typeof array_ports[i] !== 'undefined' ) {
 						let port = array_ports[i].port;
 						let mode = array_ports[i].mode;
+						console.log(i, port);
 						if( this.ports[port].mode != mode ) {
 							this.ports[port].mode = mode;
 							update_pvm = true;
@@ -618,7 +677,7 @@ let SBrick = (function() {
 			}
 		}
 
-  }
+	}
 
 	return SBrick;
 
