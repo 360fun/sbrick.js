@@ -122,7 +122,7 @@ let SBrick = (function() {
 			this.queue         = new Queue( this.maxConcurrent, this.maxQueue );
 
 			// debug
-			this._debug         = false;
+			this._debug         = true;
     }
 
 
@@ -261,7 +261,7 @@ let SBrick = (function() {
 			})
 			.then( () => {
 				let port = this.ports[portId];
-				
+
 				port.power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
 				port.direction = direction ? COUNTERCLOCKWISE : CLOCKWISE;
 
@@ -292,20 +292,30 @@ let SBrick = (function() {
 				let array = [];
 				for(let i=0;i<4;i++) {
 					if( typeof array_ports[i] !== 'undefined' ) {
-						let port = array_ports[i].port;
-						array.push( { port: port, mode: OUTPUT } );
+						let portId = array_ports[i].portId;
+						if (typeof portId === 'undefined') {
+							// the old version with port was used
+							portId = array_ports[i].port;
+							this._log('propery port is deprecated for quickDrive. Use portId instead.');
+						}
+						array.push( { port: portId, mode: OUTPUT } );
 					}
 				}
-				return this._pvm( array );
 			})
 			.then( ()=> {
 				for(let i=0;i<4;i++) {
 					if( typeof array_ports[i] !== 'undefined' ) {
-						let port = parseInt( array_ports[i].port );
-						this.ports[port].power     = Math.min(Math.max(parseInt(Math.abs(array_ports[i].power)), MIN), MAX);
-						this.ports[port].direction = array_ports[i].direction ? COUNTERCLOCKWISE : CLOCKWISE;
+						let portId = parseInt( array_ports[i].portId );
+						if (isNaN(portId)) {
+							// the old version with port instead of portId was used
+							portId = parseInt( array_ports[i].port );
+						}
+						let port = this.ports[portId];
+						port.power     = Math.min(Math.max(parseInt(Math.abs(array_ports[i].power)), MIN), MAX);
+						port.direction = array_ports[i].direction ? COUNTERCLOCKWISE : CLOCKWISE;
 					}
 				}
+				
 				if( !this.ports[0].busy && !this.ports[1].busy && !this.ports[2].busy && !this.ports[3].busy ) {
 					for(let i=0;i<4;i++) {
 						this.ports[i].busy = true;
@@ -399,21 +409,21 @@ let SBrick = (function() {
 
 		/**
 		* Read sensor data on a specific PORT
-		* @param {hexadecimal} port - PORT[0-3]
+		* @param {hexadecimal} portId - The index of the port in the this.ports array
 		* @param {string} type - not implemented yet - in the future it will manage different sensor types (distance, tilt ...)
 		* @returns {promise} - sensor measurement Object (structure depends on the sensor type)
 		*/
-		getSensor( port, type ) {
+		getSensor( portId, type ) {
 			return new Promise( (resolve, reject) => {
-				if( port!=null ) {
+				if( portId!==null ) {
 					resolve();
 				} else {
 					reject('wrong input');
 				}
 			} ).then( ()=> {
-				return this._pvm( { port:port, mode:INPUT } );
+				return this._pvm( { port:portId, mode:INPUT } );
 			}).then( ()=> {
-				let channels = this._getPortChannels(port);
+				let channels = this._getPortChannels(portId);
 				return this._adc(channels).then( data => {
 					let arrayData = [];
 					for (let i = 0; i < data.byteLength; i+=2) {
