@@ -257,7 +257,7 @@ let SBrick = (function() {
 				}
 			} )
 			.then( ()=> {
-				return this._pvm( { port:portId, mode:OUTPUT } );
+				return this._pvm( { portId:portId, mode:OUTPUT } );
 			})
 			.then( () => {
 				let port = this.ports[portId];
@@ -353,7 +353,7 @@ let SBrick = (function() {
 				let array = [];
 				for(let i=0;i<array_ports.length;i++) {
 					array.push( {
-						port: array_ports[i],
+						portId: array_ports[i],
 						mode: OUTPUT
 					} );
 				}
@@ -421,7 +421,7 @@ let SBrick = (function() {
 					reject('wrong input');
 				}
 			} ).then( ()=> {
-				return this._pvm( { port:portId, mode:INPUT } );
+				return this._pvm( { portId:portId, mode:INPUT } );
 			}).then( ()=> {
 				let channels = this._getPortChannels(portId);
 				return this._adc(channels).then( data => {
@@ -544,10 +544,10 @@ let SBrick = (function() {
 				let update_pvm = false;
 				for(let i=0;i<4;i++) {
 					if( typeof array_ports[i] !== 'undefined' ) {
-						let port = array_ports[i].port;
+						let portId = array_ports[i].portId;
 						let mode = array_ports[i].mode;
-						if( this.ports[port].mode != mode ) {
-							this.ports[port].mode = mode;
+						if( this.ports[portId].mode != mode ) {
+							this.ports[portId].mode = mode;
 							update_pvm = true;
 						}
 					}
