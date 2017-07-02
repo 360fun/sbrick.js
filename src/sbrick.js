@@ -601,11 +601,11 @@ let SBrick = (function() {
 
 		/**
 		* Helper function to find a port channel numbers
-		* @param {hexadecimal} port
+		* @param {number} portId - The index of the port in the this.ports array
 		* @returns {array} - hexadecimal numbers of both channels
 		*/
-		_getPortChannels( port ) {
-			return [ CHANNEL[port*2], CHANNEL[port*2+1] ];
+		_getPortChannels( portId ) {
+			return [ CHANNEL[portId*2], CHANNEL[portId*2+1] ];
 		}
 
 		/**
