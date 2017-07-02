@@ -260,16 +260,18 @@ let SBrick = (function() {
 				return this._pvm( { port:portId, mode:OUTPUT } );
 			})
 			.then( () => {
-				this.ports[portId].power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
-				this.ports[portId].direction = direction ? COUNTERCLOCKWISE : CLOCKWISE;
+				let port = this.ports[portId];
+				
+				port.power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
+				port.direction = direction ? COUNTERCLOCKWISE : CLOCKWISE;
 
-				if( !this.ports[portId].busy ) {
-					this.ports[portId].busy = true;
+				if( !port.busy ) {
+					port.busy = true;
 					this.queue.add( () => {
-						this.ports[portId].busy = false;
+						port.busy = false;
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
-							new Uint8Array([ CMD_DRIVE, PORT[portId], this.ports[portId].direction, this.ports[portId].power ])
+							new Uint8Array([ CMD_DRIVE, PORT[portId], port.direction, port.power ])
 						) }
 					);
 				}
