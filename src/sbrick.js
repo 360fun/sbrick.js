@@ -248,28 +248,28 @@ let SBrick = (function() {
 		}
 
 
-		drive( port, direction, power ) {
+		drive( portId, direction, power ) {
 			return new Promise( (resolve, reject) => {
-				if( PORT.indexOf(port)!=-1 && direction!=null && power!=null ) {
+				if( portId !== null && direction !== null && power !== null ) {
 					resolve();
 				} else {
 					reject('Wrong input');
 				}
 			} )
 			.then( ()=> {
-				return this._pvm( { port:port, mode:OUTPUT } );
+				return this._pvm( { port:portId, mode:OUTPUT } );
 			})
 			.then( () => {
-				this.ports[port].power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
-				this.ports[port].direction = direction ? COUNTERCLOCKWISE : CLOCKWISE;
+				this.ports[portId].power     = Math.min(Math.max(parseInt(Math.abs(power)), MIN), MAX);
+				this.ports[portId].direction = direction ? COUNTERCLOCKWISE : CLOCKWISE;
 
-				if( !this.ports[port].busy ) {
-					this.ports[port].busy = true;
+				if( !this.ports[portId].busy ) {
+					this.ports[portId].busy = true;
 					this.queue.add( () => {
-						this.ports[port].busy = false;
+						this.ports[portId].busy = false;
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
-							new Uint8Array([ CMD_DRIVE, PORT[port], this.ports[port].direction, this.ports[port].power ])
+							new Uint8Array([ CMD_DRIVE, PORT[portId], this.ports[portId].direction, this.ports[portId].power ])
 						) }
 					);
 				}
