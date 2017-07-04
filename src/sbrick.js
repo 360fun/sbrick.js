@@ -336,7 +336,7 @@ let SBrick = (function() {
 						if (typeof portId === 'undefined') {
 							// the old version with port was used
 							portId = array_ports[i].port;
-							this._log('propery port is deprecated for quickDrive. Use portId instead.');
+							this._log('Propery "port" is deprecated for quickDrive. Use "portId" instead.');
 						}
 						array.push( { port: portId, mode: OUTPUT } );
 					}
@@ -430,7 +430,7 @@ let SBrick = (function() {
 		* @returns {promise}
 		*/
 		stopAll() {
-			return this.stop([ PORT[0], PORT[1], PORT[2], PORT[3] ]);
+			return this.stop([0, 1, 2, 3]);
 		}
 
 
