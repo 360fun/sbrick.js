@@ -57,19 +57,6 @@ let SBrick = (function() {
 	const CMD_PVM       = 0x2C; // Periodic Voltage Measurements
 
 	// SBrick Ports / Channels
-	const PORT    = [
-			0x00, // PORT0 (top-left)
-			0x01, // PORT1 (bottom-left)
-			0x02, // PORT2 (top-right)
-			0x03  // PORT3 (bottom-right)
-	];
-	const CHANNEL = [
-		0x00, 0x01, // PORT0 channels
-		0x02, 0x03, // PORT1 channels
-		0x04, 0x05, // PORT2 channels
-		0x06, 0x07  // PORT3 channels
-	];
-
 	const PORTS = [
 		{ hexId: 0x00, channelHexIds: [ 0x00, 0x01 ]},
 		{ hexId: 0x01, channelHexIds: [ 0x02, 0x03 ]},
@@ -105,10 +92,10 @@ let SBrick = (function() {
 
 			// export constants
 			this.NAME     = sbrick_name || "";
-			this.PORT0    = PORT[0];
-			this.PORT1    = PORT[1];
-			this.PORT2    = PORT[2];
-			this.PORT3    = PORT[3];
+			this.PORT0    = PORTS[0].hexId;
+			this.PORT1    = PORTS[1].hexId;
+			this.PORT2    = PORTS[2].hexId;
+			this.PORT3    = PORTS[3].hexId;
 			this.CW       = CLOCKWISE;
 			this.CCW      = COUNTERCLOCKWISE;
 			this.MAX      = MAX;
@@ -137,7 +124,7 @@ let SBrick = (function() {
 
 		/**
 		* Open the Web Bluetooth popup to search and connect the SBrick (filtered by name if previously specified)
-			* @returns {promise returning undefined}
+		* @returns {promise returning undefined}
 		*/
 		connect() {
 			this.SERVICES = {
@@ -324,7 +311,7 @@ let SBrick = (function() {
 		/**
 		* send quickDrive command
 		* @param {array} portObjs - An array with a setting objects {port, direction, power}
-										for every port you want to update
+									for every port you want to update
 		* @returns {undefined}
 		*/
 		quickDrive( portObjs ) {
