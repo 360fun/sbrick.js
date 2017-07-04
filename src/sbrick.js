@@ -316,20 +316,20 @@ let SBrick = (function() {
 
 		/**
 		* send quickDrive command
-		* @param {array} array_ports - An array with a settings object {port, direction, power}
+		* @param {array} portObjs - An array with a setting objects {port, direction, power}
 										for every port you want to update
 		* @returns {undefined}
 		*/
-		quickDrive( array_ports ) {
+		quickDrive( portObjs ) {
 			return new Promise( (resolve, reject) => {
-				if( Array.isArray(array_ports) ) {
+				if( Array.isArray(portObjs) ) {
 					resolve();
 				} else {
 					reject('Wrong input');
 				}
 			} )
 			.then( ()=> {
-				array_ports.forEach( (portObj) => {
+				portObjs.forEach( (portObj) => {
 					let portId = parseInt( portObj.portId );
 					if (isNaN(portId)) {
 						// the old version with port instead of portId was used
@@ -367,12 +367,12 @@ let SBrick = (function() {
 
 		/**
 		* stop a port
-		* @param {number | array} array_ports - The number or array of numbers of channels to stop
+		* @param {number | array} portIds - The number or array of numbers of channels to stop
 		* @returns {promise}
 		*/
-		stop( array_ports ) {
+		stop( portIds ) {
 			return new Promise( (resolve, reject) => {
-				if( array_ports!==null ) {
+				if( portIds!==null ) {
 					resolve();
 				} else {
 					reject('wrong input');
@@ -380,24 +380,24 @@ let SBrick = (function() {
 			} )
 			.then( ()=> {
 				let array = [];
-				for(let i=0;i<array_ports.length;i++) {
+				portIds.forEach( (portId) => {
 					array.push( {
-						portId: array_ports[i],
+						portId: portId,
 						mode: OUTPUT
 					} );
-				}
+				});
 				return this._pvm( array );
 			})
 			.then( ()=> {
-				if( !Array.isArray(array_ports) ) {
-					array_ports = [ array_ports ];
+				if( !Array.isArray(portIds) ) {
+					portIds = [ portIds ];
 				}
 				let command = [ CMD_BREAK ];
 				// update object values and build the command
-				for(let i=0;i<array_ports.length;i++) {
-					this.ports[array_ports[i]].power = 0;
-					command.push(array_ports[i]);
-				}
+				portIds.forEach( (portId) => {
+					this.ports[portId.power] = 0;
+					command.push(portId);
+				});
 				this.queue.add( () => {
 					return this.webbluetooth.writeCharacteristicValue(
 						UUID_CHARACTERISTIC_REMOTECONTROL,
@@ -569,42 +569,43 @@ let SBrick = (function() {
 		/**
 		* Enable "Power Voltage Measurements" (five times a second) on a specific PORT (on both CHANNELS)
 		* the values are stored in internal SBrick variables, to read them use _adc()
-		* @param {array} array_ports - an array of port status objects { port: PORT[0-3], mode: INPUT-OUTPUT}
+		* @param {array} portObjs - an array of port status objects { port: PORT[0-3], mode: INPUT-OUTPUT}
 		* @returns {promise} - undefined
 		*/
-		_pvm( array_ports ) {
+		_pvm( portObjs ) {
 			return new Promise( (resolve, reject) => {
-				if( array_ports !== null ) {
+				if( portObjs !== null ) {
 					resolve();
 				} else {
 					reject('wrong input');
 				}
 			} ).then( ()=> {
-				if( !Array.isArray(array_ports) ) {
-					array_ports = [ array_ports ];
+				if( !Array.isArray(portObjs) ) {
+					portObjs = [ portObjs ];
 				}
+				
 				let update_pvm = false;
-				for(let i=0;i<4;i++) {
-					if( typeof array_ports[i] !== 'undefined' ) {
-						let portId = array_ports[i].portId;
-						let mode = array_ports[i].mode;
-						if( this.ports[portId].mode != mode ) {
-							this.ports[portId].mode = mode;
-							update_pvm = true;
-						}
+				portObjs.forEach( (portObj) => {
+					let portId = portObj.portId;
+					let mode = portObj.mode;
+					if( this.ports[portId].mode != mode ) {
+						this.ports[portId].mode = mode;
+						update_pvm = true;
 					}
-				}
+				});
+
 				if(update_pvm) {
 					let command = [CMD_PVM];
 					let srt = "";
-					for(let i=0;i<4;i++) {
-						if(this.ports[i].mode==INPUT) {
+					this.ports.forEach( (port, i) => {
+						if(port.mode==INPUT) {
 							let channels = this._getPortChannels(i);
 							command.push(channels[0]);
 							command.push(channels[1]);
 							srt += " PORT"+ i + " (CH" + channels[0] + " CH" + channels[1]+")";
 						}
-					}
+					});
+
 					return this.queue.add( () => {
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
@@ -625,8 +626,8 @@ let SBrick = (function() {
 		*/
 		_volt() {
 			return this._adc(CMD_ADC_VOLT).then( data => {
-					let volt = data.getInt16( 0, true );
-					return parseFloat( volt * 0.83875 / 2047.0 ); // V;
+				let volt = data.getInt16( 0, true );
+				return parseFloat( volt * 0.83875 / 2047.0 ); // V;
 			} );
 		}
 
@@ -636,8 +637,8 @@ let SBrick = (function() {
 		*/
 		_temp() {
 			return this._adc(CMD_ADC_TEMP).then( data => {
-					let temp = data.getInt16( 0, true );
-					return parseFloat(temp / 118.85795 - 160); // °C;
+				let temp = data.getInt16( 0, true );
+				return parseFloat(temp / 118.85795 - 160); // °C;
 			} );
 		}
 
