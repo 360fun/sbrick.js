@@ -340,25 +340,25 @@ let SBrick = (function() {
 					port.direction = portObj.direction ? COUNTERCLOCKWISE : CLOCKWISE;
 				});
 				
-				if( !this.ports[0].busy && !this.ports[1].busy && !this.ports[2].busy && !this.ports[3].busy ) {
-					for(let i=0;i<4;i++) {
-						this.ports[i].busy = true;
-					}
+				if(this._allPortsAreIdle()) {
+					this._setAllPortsBusy();
+
 					this.queue.add( () => {
 						let command = [];
-						for(let i=0;i<4;i++) {
-							this.ports[i].busy = false;
-							if( this.ports[i].mode===OUTPUT ) {
-								command.push( parseInt( parseInt(this.ports[i].power/MAX*MAX_QD).toString(2) + this.ports[i].direction, 2 ) );
+						this.ports.forEach( (port) => {
+							port.busy = false;
+							if( port.mode===OUTPUT ) {
+								command.push( parseInt( parseInt(port.power/MAX*MAX_QD).toString(2) + port.direction, 2 ) );
 							} else {
 								command.push( null );
 							}
-						}
+						});
+						
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_QUICKDRIVE,
 							new Uint8Array( command )
-						) }
-					);
+						);
+					});
 				}
 			})
 			.catch( e => { this._error(e) } );
@@ -671,6 +671,34 @@ let SBrick = (function() {
 				console.log(msg);
 			}
 		}
+
+		/**
+		* check if no port is busy
+		* @returns {boolean}
+		*/
+		_allPortsAreIdle() {
+			let allAreIdle = true;
+			this.ports.forEach((port) => {
+				if (port.busy) {
+					allAreIdle = false;
+				}
+			});
+			
+			return allAreIdle;
+		}
+
+
+		/**
+		* set all ports to busy
+		* @returns {undefined}
+		*/
+		_setAllPortsBusy() {
+			this.ports.forEach((port) => {
+				port.busy = true;
+			});
+		};
+
+
 
 	}
 
