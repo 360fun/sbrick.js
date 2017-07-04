@@ -316,7 +316,7 @@ let SBrick = (function() {
 
 		/**
 		* send quickDrive command
-		* @param {array} array_ports - An array with a settings object {portId, direction, power}
+		* @param {array} array_ports - An array with a settings object {port, direction, power}
 										for every port you want to update
 		* @returns {undefined}
 		*/
@@ -329,32 +329,16 @@ let SBrick = (function() {
 				}
 			} )
 			.then( ()=> {
-				let array = [];
-				for(let i=0;i<4;i++) {
-					if( typeof array_ports[i] !== 'undefined' ) {
-						let portId = array_ports[i].portId;
-						if (typeof portId === 'undefined') {
-							// the old version with port was used
-							portId = array_ports[i].port;
-							this._log('Propery "port" is deprecated for quickDrive. Use "portId" instead.');
-						}
-						array.push( { port: portId, mode: OUTPUT } );
+				array_ports.forEach( (portObj) => {
+					let portId = parseInt( portObj.portId );
+					if (isNaN(portId)) {
+						// the old version with port instead of portId was used
+						portId = parseInt( portObj.port );
 					}
-				}
-			})
-			.then( ()=> {
-				for(let i=0;i<4;i++) {
-					if( typeof array_ports[i] !== 'undefined' ) {
-						let portId = parseInt( array_ports[i].portId );
-						if (isNaN(portId)) {
-							// the old version with port instead of portId was used
-							portId = parseInt( array_ports[i].port );
-						}
-						let port = this.ports[portId];
-						port.power     = Math.min(Math.max(parseInt(Math.abs(array_ports[i].power)), MIN), MAX);
-						port.direction = array_ports[i].direction ? COUNTERCLOCKWISE : CLOCKWISE;
-					}
-				}
+					let port = this.ports[portId];
+					port.power     = Math.min(Math.max(parseInt(Math.abs(portObj.power)), MIN), MAX);
+					port.direction = portObj.direction ? COUNTERCLOCKWISE : CLOCKWISE;
+				});
 				
 				if( !this.ports[0].busy && !this.ports[1].busy && !this.ports[2].busy && !this.ports[3].busy ) {
 					for(let i=0;i<4;i++) {
@@ -430,7 +414,7 @@ let SBrick = (function() {
 		* @returns {promise}
 		*/
 		stopAll() {
-			return this.stop([0, 1, 2, 3]);
+			return this.stop([0, 1, 2, 3])
 		}
 
 
@@ -441,7 +425,7 @@ let SBrick = (function() {
 		getBattery() {
 			return this._volt()
 			.then( volt => {
-					return parseInt( Math.abs( volt / MAX_VOLT * 100 ) );
+				return parseInt( Math.abs( volt / MAX_VOLT * 100 ) );
 			});
 		}
 
