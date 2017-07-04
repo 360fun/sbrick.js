@@ -316,7 +316,7 @@ let SBrick = (function() {
 
 		/**
 		* send quickDrive command
-		* @param {array} array_ports - An array with a settings object {port, direction, power}
+		* @param {array} array_ports - An array with a settings object {portId, direction, power}
 										for every port you want to update
 		* @returns {undefined}
 		*/
