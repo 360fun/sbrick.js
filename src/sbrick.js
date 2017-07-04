@@ -70,6 +70,13 @@ let SBrick = (function() {
 		0x06, 0x07  // PORT3 channels
 	];
 
+	const PORTS = [
+		{ hexId: 0x00, channelHexIds: [ 0x00, 0x01 ]},
+		{ hexId: 0x01, channelHexIds: [ 0x02, 0x03 ]},
+		{ hexId: 0x02, channelHexIds: [ 0x04, 0x05 ]},
+		{ hexId: 0x03, channelHexIds: [ 0x06, 0x07 ]}
+	];
+
 	// Port Mode
 	const INPUT  = 'input';
 	const OUTPUT = 'output';
@@ -211,11 +218,11 @@ let SBrick = (function() {
 		*/
 		disconnect() {
 			return new Promise( (resolve, reject) => {
-					if( this.isConnected() ) {
-						resolve();
-					} else {
-						reject('Not connected');
-					}
+				if( this.isConnected() ) {
+					resolve();
+				} else {
+					reject('Not connected');
+				}
 			} ).then( ()=> {
 				return this.stopAll().then( ()=>{
 					clearInterval( this.keepalive );
@@ -305,7 +312,7 @@ let SBrick = (function() {
 						port.busy = false;
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
-							new Uint8Array([ CMD_DRIVE, PORT[portId], port.direction, port.power ])
+							new Uint8Array([ CMD_DRIVE, PORTS[portId].hexId, port.direction, port.power ])
 						) }
 					);
 				}
@@ -569,7 +576,7 @@ let SBrick = (function() {
 		/**
 		* Enable "Power Voltage Measurements" (five times a second) on a specific PORT (on both CHANNELS)
 		* the values are stored in internal SBrick variables, to read them use _adc()
-		* @param {array} portObjs - an array of port status objects { port: PORT[0-3], mode: INPUT-OUTPUT}
+		* @param {array} portObjs - an array of port status objects { portId, mode: INPUT-OUTPUT}
 		* @returns {promise} - undefined
 		*/
 		_pvm( portObjs ) {
@@ -583,7 +590,7 @@ let SBrick = (function() {
 				if( !Array.isArray(portObjs) ) {
 					portObjs = [ portObjs ];
 				}
-				
+
 				let update_pvm = false;
 				portObjs.forEach( (portObj) => {
 					let portId = portObj.portId;
@@ -648,7 +655,7 @@ let SBrick = (function() {
 		* @returns {array} - hexadecimal numbers of both channels
 		*/
 		_getPortChannels( portId ) {
-			return [ CHANNEL[portId*2], CHANNEL[portId*2+1] ];
+			return PORTS[portId].channelHexIds;
 		}
 
 		/**
