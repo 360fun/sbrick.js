@@ -274,7 +274,7 @@ let SBrick = (function() {
 		* @param {number} portId - The index (0-3) of the port to update in the this.ports array
 		* @param {hexadecimal number} direction - The drive direction (0x00, 0x01 - you can use the constants SBrick.CLOCKWISE and SBrick.COUNTERCLOCKWISE)
 		* @param {number} power - The power level for the drive command 0-255
-		* @returns {promise}
+		* @returns {promise returning object} - Returned object: portId, direction, power
 		*/
 		drive( portId, direction, power ) {
 			return new Promise( (resolve, reject) => {
@@ -303,7 +303,11 @@ let SBrick = (function() {
 						) }
 					);
 				}
-			} )
+			})
+			.then( () => {
+				// all went well, return the settings we just applied
+				return this._getPortData(portId);
+			})
 			.catch( e => { this._error(e) } );
 		}
 
@@ -312,7 +316,7 @@ let SBrick = (function() {
 		* send quickDrive command
 		* @param {array} portObjs - An array with a setting objects {port, direction, power}
 									for every port you want to update
-		* @returns {undefined}
+		* @returns {promise returning array} - Returned array: [{portId, direction, power}, {...}, {...}, {...}]
 		*/
 		quickDrive( portObjs ) {
 			return new Promise( (resolve, reject) => {
@@ -354,6 +358,20 @@ let SBrick = (function() {
 						);
 					});
 				}
+			})
+			.then( () => {
+				// all went well, return an array with the channels and the settings we just applied
+				let returnData = [];
+
+				portObjs.forEach((portObj) => {
+					let portId = portObj.portId;
+					if (portObj.port) {
+						// it uses the old syntax
+						portId = parseInt( portObj.port );
+					}
+					returnData.push(this._getPortData(portId));
+				});
+				return returnData;
 			})
 			.catch( e => { this._error(e) } );
 		}
@@ -643,6 +661,20 @@ let SBrick = (function() {
 		*/
 		_getPortChannels( portId ) {
 			return PORTS[portId].channelHexIds;
+		}
+
+		/**
+		* get the settings of a specific port
+		* @returns {object} portId, direction, power
+		*/
+		_getPortData(portId) {
+			const port = this.ports[portId],
+				data = {
+					portId: portId,
+					direction: port.direction,
+					power: port.power
+				};
+			return data;
 		}
 
 		/**
