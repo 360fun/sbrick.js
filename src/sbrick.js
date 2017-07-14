@@ -271,12 +271,27 @@ let SBrick = (function() {
 
 		/**
 		* send drive command
-		* @param {number} portId - The index (0-3) of the port to update in the this.ports array
-		* @param {hexadecimal number} direction - The drive direction (0x00, 0x01 - you can use the constants SBrick.CLOCKWISE and SBrick.COUNTERCLOCKWISE)
-		* @param {number} power - The power level for the drive command 0-255
+		* @param {object} portObj - {portId, direction, power}
+		*		portId: {number} The index (0-3) of the port to update in the this.ports array
+		*		direction: {hexadecimal number} The drive direction (0x00, 0x01 - you can use the constants SBrick.CLOCKWISE and SBrick.COUNTERCLOCKWISE)
+		*		power {number} - The power level for the drive command 0-255
 		* @returns {promise returning object} - Returned object: portId, direction, power
 		*/
-		drive( portId, direction, power ) {
+		drive( portObj ) {
+			if (typeof portObj !== 'object') {
+				// the old version with 3 params was used
+				portObj = {
+					portId: 	arguments[0],
+					direction: 	arguments[1],
+					power: 		arguments[2]
+				};
+				this._log('calling drive with 3 arguments is deprecated. use 1 object {portId, direction, power} instead.');
+			}
+
+			const portId = portObj.portId,
+				direction = portObj.direction,
+				power = portObj.power;
+
 			return new Promise( (resolve, reject) => {
 				if( portId !== null && direction !== null && power !== null ) {
 					resolve();
@@ -332,6 +347,7 @@ let SBrick = (function() {
 					if (isNaN(portId)) {
 						// the old version with port instead of portId was used
 						portId = parseInt( portObj.port );
+						this._log('object property port is deprecated. use portId instead.');
 					}
 					let port = this.ports[portId];
 					port.power     = Math.min(Math.max(parseInt(Math.abs(portObj.power)), MIN), MAX);
