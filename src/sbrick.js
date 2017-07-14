@@ -389,7 +389,7 @@ let SBrick = (function() {
 				let command = [ CMD_BREAK ];
 				// update object values and build the command
 				portIds.forEach( (portId) => {
-					this.ports[portId.power] = 0;
+					this.ports[portId].power = 0;
 					command.push(portId);
 				});
 				this.queue.add( () => {
