@@ -432,7 +432,16 @@ let SBrick = (function() {
 						new Uint8Array( command )
 					);
 				});
-			} )
+			})
+			.then( () => {
+				// all went well, return an array with the channels and the settings we just applied
+				let returnData = [];
+
+				portIds.forEach((portId) => {
+					returnData.push(this._getPortData(portId));
+				});
+				return returnData;
+			})
 			.catch( e => { this._error(e) } );
 		}
 
