@@ -282,21 +282,27 @@ let SBrick = (function() {
 				// the old version with 3 params was used
 				portObj = {
 					portId: 	arguments[0],
-					direction: 	arguments[1],
+					direction: 	arguments[1] || CLOCKWISE,
 					power: 		arguments[2]
 				};
 				this._log('calling drive with 3 arguments is deprecated. use 1 object {portId, direction, power} instead.');
 			}
 
 			const portId = portObj.portId,
-				direction = portObj.direction,
+				direction = portObj.direction || CLOCKWISE,
 				power = portObj.power;
 
 			return new Promise( (resolve, reject) => {
-				if( portId !== null && direction !== null && power !== null ) {
+				if( portId !== undefined && direction !== undefined && power !== undefined ) {
 					resolve();
 				} else {
-					reject('Wrong input');
+					let msg = 'Wrong input: please specify ';
+					if (portId === undefined) { msg += 'portId'; }
+					if (power === undefined) {
+						if (portId === undefined) {	msg += ' and'; }
+						msg += ' power';
+					}
+					reject(msg);
 				}
 			} )
 			.then( ()=> {
@@ -338,7 +344,7 @@ let SBrick = (function() {
 				if( Array.isArray(portObjs) ) {
 					resolve();
 				} else {
-					reject('Wrong input');
+					reject('Wrong input: quickDrive expects array');
 				}
 			} )
 			.then( ()=> {
