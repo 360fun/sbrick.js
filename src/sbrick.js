@@ -328,7 +328,7 @@ let SBrick = (function() {
 			.then( () => {
 				// all went well, return the settings we just applied and send event
 				let portData = this._getPortData(portId),
-					event = new CustomEvent('drivechange.sbrick', {detail: portData});
+					event = new CustomEvent('portchange.sbrick', {detail: portData});
 				document.body.dispatchEvent(event);
 				return portData;
 			})
