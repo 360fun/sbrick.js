@@ -326,10 +326,10 @@ let SBrick = (function() {
 				}
 			})
 			.then( () => {
-				// all went well, return the settings we just applied and send event
-				let portData = this._getPortData(portId),
-					event = new CustomEvent('portchange.sbrick', {detail: portData});
-				document.body.dispatchEvent(event);
+				// all went well, send event and return the settings we just applied
+				let portData = this._getPortData(portId);
+				this._sendPortChangeEvent(portData);
+				// return the new settings to the promise
 				return portData;
 			})
 			.catch( e => { this._error(e) } );
@@ -394,7 +394,11 @@ let SBrick = (function() {
 						// it uses the old syntax
 						portId = parseInt( portObj.port );
 					}
-					returnData.push(this._getPortData(portId));
+
+					//send event for this port
+					let portData = this._getPortData(portId);
+					this._sendPortChangeEvent(portData);
+					returnData.push(portData);
 				});
 				return returnData;
 			})
@@ -447,7 +451,11 @@ let SBrick = (function() {
 				let returnData = [];
 
 				portIds.forEach((portId) => {
-					returnData.push(this._getPortData(portId));
+					
+					//send event for this port
+					let portData = this._getPortData(portId);
+					this._sendPortChangeEvent(portData);
+					returnData.push(portData);
 				});
 				return returnData;
 			})
@@ -731,6 +739,16 @@ let SBrick = (function() {
 			if(this._debug) {
 				console.log(msg);
 			}
+		}
+
+		/**
+		* trigger event on body to notify listeners that a port's values have changed
+		* @param {object} portData - The data ({portId, power, direction}) for the port that was changed
+		* @returns {undefined}
+		*/
+		_sendPortChangeEvent( portData ) {
+			const event = new CustomEvent('portchange.sbrick', {detail: portData});
+			document.body.dispatchEvent(event);
 		}
 
 		/**
