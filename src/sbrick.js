@@ -593,7 +593,6 @@ let SBrick = (function() {
 					if( typeof array_ports[i] !== 'undefined' ) {
 						let port = array_ports[i].port;
 						let mode = array_ports[i].mode;
-						console.log(i, port);
 						if( this.ports[port].mode != mode ) {
 							this.ports[port].mode = mode;
 							update_pvm = true;
