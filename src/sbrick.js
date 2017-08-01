@@ -484,6 +484,13 @@ let SBrick = (function() {
 
 					// Sensor Type Management
 					switch(type) {
+						case "wedo":
+							let type  = Math.round( ( sensorData.ch0_raw / sensorData.voltage ) * 255 );
+							let value = Math.round( ( sensorData.ch1_raw / sensorData.voltage ) * 255 );
+							sensorData.type  = ( type >= 48 && type <= 50 ) ? "tilt" : "motion";
+							sensorData.value = value;
+							break;
+
 						default:
 							sensorData.value = sensorData.ch1_raw / sensorData.voltage;
 					}
