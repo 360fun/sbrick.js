@@ -470,25 +470,24 @@ let SBrick = (function() {
 				return this._pvm( { port:port, mode:INPUT } );
 			}).then( ()=> {
 				let channels = this._getPortChannels(port);
-				channels.push(CMD_ADC_VOLT);
-				return this._adc(channels).then( data => {
+				return this._adc([CMD_ADC_VOLT].concat(channels)).then( data => {
 					let arrayData = [];
 					for (let i = 0; i < data.byteLength; i+=2) {
-						arrayData.push(data.getUint16(i, true) >> 4);
+						arrayData.push( data.getUint16(i, true) );
 					}
-					let measurements = {};
+					let sensorData = {
+						type: 'unknown',
+						voltage: arrayData[0] >> 4,
+						ch0_raw: arrayData[1] >> 4,
+						ch1_raw: arrayData[2] >> 4
+					};
 
 					// Sensor Type Management
 					switch(type) {
 						default:
-							measurements = {
-								ch0:      arrayData[0]/arrayData[2],
-								ch0_bin: (arrayData[0] >>> 0).toString(2),
-								ch1:      arrayData[1]/arrayData[2],
-								ch1_bin: (arrayData[1] >>> 0).toString(2)
-							}
+							sensorData.value = sensorData.ch1_raw / sensorData.voltage;
 					}
-					return measurements;
+					return sensorData;
 				} );
 			});
 		}
