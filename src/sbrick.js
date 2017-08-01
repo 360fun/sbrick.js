@@ -621,6 +621,7 @@ let SBrick = (function() {
 						});
 					});
 				}
+				return false;
 			});
 		}
 
