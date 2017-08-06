@@ -470,24 +470,31 @@ let SBrick = (function() {
 				return this._pvm( { port:port, mode:INPUT } );
 			}).then( ()=> {
 				let channels = this._getPortChannels(port);
-				return this._adc(channels).then( data => {
+				return this._adc([CMD_ADC_VOLT].concat(channels)).then( data => {
 					let arrayData = [];
 					for (let i = 0; i < data.byteLength; i+=2) {
-						arrayData.push(data.getInt16(i, true) >> 4);
+						arrayData.push( data.getUint16(i, true) );
 					}
-					let measurements = {};
+					let sensorData = {
+						type: 'unknown',
+						voltage: arrayData[0] >> 4,
+						ch0_raw: arrayData[1] >> 4,
+						ch1_raw: arrayData[2] >> 4
+					};
 
 					// Sensor Type Management
 					switch(type) {
+						case "wedo":
+							let type  = Math.round( ( sensorData.ch0_raw / sensorData.voltage ) * 255 );
+							let value = Math.round( ( sensorData.ch1_raw / sensorData.voltage ) * 255 );
+							sensorData.type  = ( type >= 48 && type <= 50 ) ? "tilt" : "motion";
+							sensorData.value = value;
+							break;
+
 						default:
-							measurements = {
-								ch0:      arrayData[0],
-								ch0_bin: (arrayData[0] >>> 0).toString(2),
-								ch1:      arrayData[1],
-								ch1_bin: (arrayData[1] >>> 0).toString(2)
-							}
+							sensorData.value = sensorData.ch1_raw / sensorData.voltage;
 					}
-					return measurements;
+					return sensorData;
 				} );
 			});
 		}
@@ -592,7 +599,6 @@ let SBrick = (function() {
 					if( typeof array_ports[i] !== 'undefined' ) {
 						let port = array_ports[i].port;
 						let mode = array_ports[i].mode;
-						console.log(i, port);
 						if( this.ports[port].mode != mode ) {
 							this.ports[port].mode = mode;
 							update_pvm = true;
@@ -620,6 +626,7 @@ let SBrick = (function() {
 						});
 					});
 				}
+				return false;
 			});
 		}
 
