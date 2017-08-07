@@ -505,21 +505,22 @@ let SBrick = (function() {
 
 		/**
 		* Read sensor data on a specific PORT
-		* @param {hexadecimal} port - PORT[0-3]
+		* @param {hexadecimal} portId - The index of the port in the this.ports array
 		* @param {string} type - not implemented yet - in the future it will manage different sensor types (distance, tilt ...)
 		* @returns {promise} - sensor measurement Object (structure depends on the sensor type)
 		*/
-		getSensor( port, type ) {
+		getSensor( portId, type ) {
 			return new Promise( (resolve, reject) => {
-				if( port !== null ) {
+				if( portId !== null ) {
 					resolve();
 				} else {
 					reject('wrong input');
 				}
 			}).then( ()=> {
-				return this._pvm( { port:port, mode:INPUT } );
+				// return this._pvm( { port:port, mode:INPUT } );
+				return this._pvm( { portId: portId, mode:INPUT } );
 			}).then( ()=> {
-				let channels = this._getPortChannels(port);
+				let channels = this._getPortChannels(portId);
 				return this._adc([CMD_ADC_VOLT].concat(channels)).then( data => {
 					let arrayData = [];
 					for (let i = 0; i < data.byteLength; i+=2) {
@@ -555,7 +556,7 @@ let SBrick = (function() {
 		* @param {string} type - not implemented yet - in the future it will manage different sensor types (distance, tilt ...)
 		* @returns {promise} - sensor measurement Object (structure depends on the sensor type)
 		*/
-		getSensor_( portId, type ) {
+		getSensor_bak( portId, type ) {
 			return new Promise( (resolve, reject) => {
 				if( portId!==null ) {
 					resolve();
@@ -669,63 +670,10 @@ let SBrick = (function() {
 		/**
 		* Enable "Power Voltage Measurements" (five times a second) on a specific PORT (on both CHANNELS)
 		* the values are stored in internal SBrick variables, to read them use _adc()
-		* @param {array} array_ports - an array of port status objects { port: PORT[0-3], mode: INPUT-OUTPUT}
-		* @returns {promise} - undefined
-		*/
-		_pvm( array_ports ) {
-			return new Promise( (resolve, reject) => {
-				if( array_ports !== null ) {
-					resolve();
-				} else {
-					reject('wrong input');
-				}
-			} ).then( ()=> {
-				if( !Array.isArray(array_ports) ) {
-					array_ports = [ array_ports ];
-				}
-				let update_pvm = false;
-				for(let i=0;i<4;i++) {
-					if( typeof array_ports[i] !== 'undefined' ) {
-						let port = array_ports[i].port;
-						let mode = array_ports[i].mode;
-						if( this.ports[port].mode != mode ) {
-							this.ports[port].mode = mode;
-							update_pvm = true;
-						}
-					}
-				}
-				if(update_pvm) {
-					let command = [CMD_PVM];
-					let srt = "";
-					for(let i=0;i<4;i++) {
-						if(this.ports[i].mode==INPUT) {
-							let channels = this._getPortChannels(i);
-							command.push(channels[0]);
-							command.push(channels[1]);
-							srt += " PORT"+ i + " (CH" + channels[0] + " CH" + channels[1]+")";
-						}
-					}
-					return this.queue.add( () => {
-						return this.webbluetooth.writeCharacteristicValue(
-							UUID_CHARACTERISTIC_REMOTECONTROL,
-							new Uint8Array(command)
-						)
-						.then( () => {
-							this._log( "PVM set" + ( srt=="" ? " OFF" : srt ) );
-						});
-					});
-				}
-				return false;
-			});
-		}
-
-		/**
-		* Enable "Power Voltage Measurements" (five times a second) on a specific PORT (on both CHANNELS)
-		* the values are stored in internal SBrick variables, to read them use _adc()
 		* @param {array} portObjs - an array of port status objects { portId, mode: INPUT-OUTPUT}
 		* @returns {promise} - undefined
 		*/
-		_pvm_( portObjs ) {
+		_pvm( portObjs ) {
 			return new Promise( (resolve, reject) => {
 				if( portObjs !== null ) {
 					resolve();
@@ -769,6 +717,7 @@ let SBrick = (function() {
 						});
 					});
 				}
+				return false;
 			});
 		}
 
