@@ -506,10 +506,10 @@ let SBrick = (function() {
 		/**
 		* Read sensor data on a specific PORT
 		* @param {hexadecimal} portId - The index of the port in the this.ports array
-		* @param {string} type - not implemented yet - in the future it will manage different sensor types (distance, tilt ...)
+		* @param {string} sensorSeries - not implemented yet - in the future it will manage different sensor series (wedo, EV3, NXT, ...)
 		* @returns {promise} - sensor measurement Object (structure depends on the sensor type)
 		*/
-		getSensor( portId, type ) {
+		getSensor( portId, sensorSeries ) {
 			return new Promise( (resolve, reject) => {
 				if( portId !== null ) {
 					resolve();
@@ -534,11 +534,11 @@ let SBrick = (function() {
 					};
 
 					// Sensor Type Management
-					switch(type) {
+					switch(sensorSeries) {
 						case "wedo":
-							let type  = Math.round( ( sensorData.ch0_raw / sensorData.voltage ) * 255 );
+							let typeId  = Math.round( ( sensorData.ch0_raw / sensorData.voltage ) * 255 );
 							let value = Math.round( ( sensorData.ch1_raw / sensorData.voltage ) * 255 );
-							sensorData.type  = ( type >= 48 && type <= 50 ) ? "tilt" : "motion";
+							sensorData.type  = ( typeId >= 48 && typeId <= 50 ) ? "tilt" : "motion";
 							sensorData.value = value;
 							break;
 
