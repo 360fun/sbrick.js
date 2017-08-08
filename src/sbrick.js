@@ -517,7 +517,6 @@ let SBrick = (function() {
 					reject('wrong input');
 				}
 			}).then( ()=> {
-				// return this._pvm( { port:port, mode:INPUT } );
 				return this._pvm( { portId: portId, mode:INPUT } );
 			}).then( ()=> {
 				let channels = this._getPortChannels(portId);
@@ -546,45 +545,6 @@ let SBrick = (function() {
 							sensorData.value = sensorData.ch1_raw / sensorData.voltage;
 					}
 					return sensorData;
-				} );
-			});
-		}
-
-		/**
-		* Read sensor data on a specific PORT
-		* @param {hexadecimal} portId - The index of the port in the this.ports array
-		* @param {string} type - not implemented yet - in the future it will manage different sensor types (distance, tilt ...)
-		* @returns {promise} - sensor measurement Object (structure depends on the sensor type)
-		*/
-		getSensor_bak( portId, type ) {
-			return new Promise( (resolve, reject) => {
-				if( portId!==null ) {
-					resolve();
-				} else {
-					reject('wrong input');
-				}
-			} ).then( ()=> {
-				return this._pvm( { portId:portId, mode:INPUT } );
-			}).then( ()=> {
-				let channels = this._getPortChannels(portId);
-				return this._adc(channels).then( data => {
-					let arrayData = [];
-					for (let i = 0; i < data.byteLength; i+=2) {
-						arrayData.push(data.getInt16(i, true) >> 4);
-					}
-					let measurements = {};
-
-					// Sensor Type Management
-					switch(type) {
-						default:
-							measurements = {
-								ch0:      arrayData[0],
-								ch0_bin: (arrayData[0] >>> 0).toString(2),
-								ch1:      arrayData[1],
-								ch1_bin: (arrayData[1] >>> 0).toString(2)
-							}
-					}
-					return measurements;
 				} );
 			});
 		}
