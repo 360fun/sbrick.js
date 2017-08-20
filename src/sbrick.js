@@ -104,10 +104,10 @@ let SBrick = (function() {
 			// status
 			this.keepalive = null;
 			this.ports     = [
-				{ id: 0, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false },
-				{ id: 1, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false },
-				{ id: 2, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false },
-				{ id: 3, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false }
+				{ id: 0, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvmActive: false, busy: false },
+				{ id: 1, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvmActive: false, busy: false },
+				{ id: 2, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvmActive: false, busy: false },
+				{ id: 3, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvmActive: false, busy: false }
 			];
 
 			// queue
@@ -310,7 +310,7 @@ let SBrick = (function() {
 				// all ports have mode:OUTPUT by default
 				// and only change from OUTPUT to INPUT on sensors
 				// output ports don't need pvm
-				return this._pvm( { portId:portId, mode:OUTPUT, pvm: false } );
+				return this._pvm( { portId:portId, mode:OUTPUT, pvmActive: false } );
 			})
 			.then( () => {
 				let port = this.ports[portId];
@@ -431,15 +431,15 @@ let SBrick = (function() {
 				portIds.forEach( (portId) => {
 					// set pvm of input ports to false
 					const port = this.ports[portId];
-					let pvm = true;
+					let pvmActive = true;
 					if (port.mode === INPUT) {
-						pvm = false;
+						pvmActive = false;
 					}
 					// TODO: I think object needs only to be pushed when it's input-port
 					array.push( {
 						portId: portId,
 						mode: port.mode,
-						pvm: pvm
+						pvmActive: pvmActive
 					} );
 				});
 				return this._pvm( array );
@@ -538,7 +538,7 @@ let SBrick = (function() {
 				}
 			}).then( ()=> {
 				this.ports[portId].mode = INPUT;// apparently, this is a sensor. So make sure its mode is set to input
-				return this._pvm( { portId: portId, mode:INPUT, pvm: true } );
+				return this._pvm( { portId: portId, mode:INPUT, pvmActive: true } );
 			}).then( ()=> {
 				let channels = this._getPortChannels(portId);
 				return this._adc([CMD_ADC_VOLT].concat(channels)).then( data => {
@@ -651,7 +651,7 @@ let SBrick = (function() {
 		/**
 		* Enable "Power Voltage Measurements" (five times a second) on a specific PORT (on both CHANNELS)
 		* the values are stored in internal SBrick variables, to read them use _adc()
-		* @param {array} portObjs - an array of port status objects { portId, mode: INPUT | OUTPUT, pvm: true | false}
+		* @param {array} portObjs - an array of port status objects { portId, mode: INPUT | OUTPUT, pvmActive: true | false}
 		* @returns {promise} - undefined
 		*/
 		_pvm( portObjs ) {
@@ -669,9 +669,9 @@ let SBrick = (function() {
 				let update_pvm = false;
 				portObjs.forEach( (portObj) => {
 					let portId = portObj.portId;
-					let pvm = portObj.pvm;
-					if( this.ports[portId].pvm != pvm ) {
-						this.ports[portId].pvm = pvm;
+					let pvmActive = portObj.pvmActive;
+					if( this.ports[portId].pvmActive != pvmActive ) {
+						this.ports[portId].pvmActive = pvmActive;
 						update_pvm = true;
 					}
 				});
@@ -680,7 +680,7 @@ let SBrick = (function() {
 					let command = [CMD_PVM];
 					let srt = "";
 					this.ports.forEach( (port, i) => {
-						if(port.pvm === true) {
+						if(port.pvmActive === true) {
 							let channels = this._getPortChannels(i);
 							command.push(channels[0]);
 							command.push(channels[1]);
