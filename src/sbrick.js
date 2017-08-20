@@ -421,6 +421,9 @@ let SBrick = (function() {
 			} )
 			.then( ()=> {
 				let array = [];
+				if( !Array.isArray(portIds) ) {
+					portIds = [ portIds ];
+				}
 				portIds.forEach( (portId) => {
 					array.push( {
 						portId: portId,
@@ -430,9 +433,6 @@ let SBrick = (function() {
 				return this._pvm( array );
 			})
 			.then( ()=> {
-				if( !Array.isArray(portIds) ) {
-					portIds = [ portIds ];
-				}
 				let command = [ CMD_BREAK ];
 				// update object values and build the command
 				portIds.forEach( (portId) => {
