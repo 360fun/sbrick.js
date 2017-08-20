@@ -104,10 +104,10 @@ let SBrick = (function() {
 			// status
 			this.keepalive = null;
 			this.ports     = [
-				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
-				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
-				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false },
-				{ power: MIN, direction: CLOCKWISE, mode: OUTPUT, busy: false }
+				{ id: 0, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false },
+				{ id: 1, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false },
+				{ id: 2, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false },
+				{ id: 3, power: MIN, direction: CLOCKWISE, mode: OUTPUT, pvm: false, busy: false }
 			];
 
 			// queue
@@ -306,7 +306,11 @@ let SBrick = (function() {
 				}
 			} )
 			.then( ()=> {
-				return this._pvm( { portId:portId, mode:OUTPUT } );
+				// I think this promise could be removed:
+				// all ports have mode:OUTPUT by default
+				// and only change from OUTPUT to INPUT on sensors
+				// output ports don't need pvm
+				return this._pvm( { portId:portId, mode:OUTPUT, pvm: false } );
 			})
 			.then( () => {
 				let port = this.ports[portId];
@@ -425,9 +429,17 @@ let SBrick = (function() {
 					portIds = [ portIds ];
 				}
 				portIds.forEach( (portId) => {
+					// set pvm of input ports to false
+					const port = this.ports[portId];
+					let pvm = true;
+					if (port.mode === INPUT) {
+						pvm = false;
+					}
+					// TODO: I think object needs only to be pushed when it's input-port
 					array.push( {
 						portId: portId,
-						mode: OUTPUT
+						mode: port.mode,
+						pvm: pvm
 					} );
 				});
 				return this._pvm( array );
@@ -435,16 +447,24 @@ let SBrick = (function() {
 			.then( ()=> {
 				let command = [ CMD_BREAK ];
 				// update object values and build the command
+				// only send command to output ports, otherwise sensor values get messed up
 				portIds.forEach( (portId) => {
-					this.ports[portId].power = 0;
-					command.push(portId);
+					let port = this.ports[portId];
+					if (port.mode === OUTPUT) {
+						port.power = 0;
+						command.push(PORTS[portId].hexId);
+					}
 				});
-				this.queue.add( () => {
-					return this.webbluetooth.writeCharacteristicValue(
-						UUID_CHARACTERISTIC_REMOTECONTROL,
-						new Uint8Array( command )
-					);
-				});
+
+				if (command.length > 1) {
+					// there is at least one output port
+					this.queue.add( () => {
+						return this.webbluetooth.writeCharacteristicValue(
+							UUID_CHARACTERISTIC_REMOTECONTROL,
+							new Uint8Array( command )
+						);
+					});
+				}
 			})
 			.then( () => {
 				// all went well, return an array with the channels and the settings we just applied
@@ -517,7 +537,8 @@ let SBrick = (function() {
 					reject('wrong input');
 				}
 			}).then( ()=> {
-				return this._pvm( { portId: portId, mode:INPUT } );
+				this.ports[portId].mode = INPUT;// apparently, this is a sensor. So make sure its mode is set to input
+				return this._pvm( { portId: portId, mode:INPUT, pvm: true } );
 			}).then( ()=> {
 				let channels = this._getPortChannels(portId);
 				return this._adc([CMD_ADC_VOLT].concat(channels)).then( data => {
@@ -630,7 +651,7 @@ let SBrick = (function() {
 		/**
 		* Enable "Power Voltage Measurements" (five times a second) on a specific PORT (on both CHANNELS)
 		* the values are stored in internal SBrick variables, to read them use _adc()
-		* @param {array} portObjs - an array of port status objects { portId, mode: INPUT-OUTPUT}
+		* @param {array} portObjs - an array of port status objects { portId, mode: INPUT | OUTPUT, pvm: true | false}
 		* @returns {promise} - undefined
 		*/
 		_pvm( portObjs ) {
@@ -648,9 +669,9 @@ let SBrick = (function() {
 				let update_pvm = false;
 				portObjs.forEach( (portObj) => {
 					let portId = portObj.portId;
-					let mode = portObj.mode;
-					if( this.ports[portId].mode != mode ) {
-						this.ports[portId].mode = mode;
+					let pvm = portObj.pvm;
+					if( this.ports[portId].pvm != pvm ) {
+						this.ports[portId].pvm = pvm;
 						update_pvm = true;
 					}
 				});
@@ -659,7 +680,7 @@ let SBrick = (function() {
 					let command = [CMD_PVM];
 					let srt = "";
 					this.ports.forEach( (port, i) => {
-						if(port.mode==INPUT) {
+						if(port.pvm === true) {
 							let channels = this._getPortChannels(i);
 							command.push(channels[0]);
 							command.push(channels[1]);
