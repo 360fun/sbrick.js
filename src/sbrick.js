@@ -668,8 +668,7 @@ let SBrick = (function() {
 							srt += " PORT"+ i + " (CH" + channels[0] + " CH" + channels[1]+")";
 						}
 					});
-
-					return this.queue.add( () => {
+					this.queue.add( () => {
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_REMOTECONTROL,
 							new Uint8Array(command)
