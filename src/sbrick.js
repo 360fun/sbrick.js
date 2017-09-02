@@ -355,32 +355,40 @@ let SBrick = (function() {
 				}
 			} )
 			.then( ()=> {
-				portObjs.forEach( (portObj) => {
-					let portId = parseInt( portObj.portId );
-					if (isNaN(portId)) {
-						// the old version with port instead of portId was used
-						portId = parseInt( portObj.port );
-						this._log('object property port is deprecated. use portId instead.');
-					}
-					let port = this.ports[portId];
-					port.power     = Math.min(Math.max(parseInt(Math.abs(portObj.power)), MIN), MAX);
-					port.direction = portObj.direction ? COUNTERCLOCKWISE : CLOCKWISE;
+				let array = [];
+				let allPorts = this._getPorts();
+				allPorts.forEach( (portId) => {
+					array.push( {
+						portId: portId,
+						mode: OUTPUT
+					} );
 				});
-				
-				if(this._allPortsAreIdle()) {
-					this._setAllPortsBusy();
-
+				console.log(array);
+				return this._pvm( array );
+			})
+			.then( ()=> {
+				// updating ports status
+				portObjs.forEach( (portObj) => {
+		      let portId = parseInt( portObj.portId );
+		      if (isNaN(portId)) {
+		        // the old version with port instead of portId was used
+		        portId = parseInt( portObj.port );
+		        this._log('object property port is deprecated. use portId instead.');
+		      }
+		      let port       = this.ports[portId];
+		      port.power     = Math.min(Math.max(parseInt(Math.abs(portObj.power)), MIN), MAX);
+		      port.direction = portObj.direction ? COUNTERCLOCKWISE : CLOCKWISE;
+		    });
+				// send command
+				if(this._portsIdle(this._getPorts())) {
+					// set all ports busy
+		      this._setPortsBusy(this._getPorts(), true);
 					this.queue.add( () => {
 						let command = [];
-						this.ports.forEach( (port) => {
-							port.busy = false;
-							if( port.mode===OUTPUT ) {
+						this.ports.forEach( (port, index) => {
+								port.busy = false;
 								command.push( parseInt( parseInt(port.power/MAX*MAX_QD).toString(2) + port.direction, 2 ) );
-							} else {
-								command.push( null );
-							}
 						});
-						
 						return this.webbluetooth.writeCharacteristicValue(
 							UUID_CHARACTERISTIC_QUICKDRIVE,
 							new Uint8Array( command )
