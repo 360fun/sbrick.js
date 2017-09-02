@@ -91,10 +91,10 @@ let SBrick = (function() {
 
 			// export constants
 			this.NAME     = sbrick_name || "";
-			this.PORT0    = PORTS[0].hexId;
-			this.PORT1    = PORTS[1].hexId;
-			this.PORT2    = PORTS[2].hexId;
-			this.PORT3    = PORTS[3].hexId;
+			this.PORT0    = this.TOPLEFT     = PORTS[0].portId;
+			this.PORT1    = this.BOTTOMLEFT  = PORTS[1].portId;
+			this.PORT2    = this.TOPRIGHT    = PORTS[2].portId;
+			this.PORT3    = this.BOTTOMRIGHT = PORTS[3].portId;
 			this.CW       = CLOCKWISE;
 			this.CCW      = COUNTERCLOCKWISE;
 			this.MAX      = MAX;
