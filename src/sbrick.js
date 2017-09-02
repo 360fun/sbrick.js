@@ -472,7 +472,7 @@ let SBrick = (function() {
 		* @returns {promise}
 		*/
 		stopAll() {
-			return this.stop([0, 1, 2, 3])
+			return this.stop( this._getPorts() );
 		}
 
 
