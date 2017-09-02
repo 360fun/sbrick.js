@@ -709,6 +709,14 @@ let SBrick = (function() {
 		}
 
 		/**
+		* Helper function to get ports Ids
+		* @returns {boolean}
+		*/
+		_getPorts() {
+			return PORTS.map( function(obj) {return obj.portId;} );
+		}
+
+		/**
 		* Helper function to find a port channel numbers
 		* @param {number} portId - The index of the port in the this.ports array
 		* @returns {array} - hexadecimal numbers of both channels
