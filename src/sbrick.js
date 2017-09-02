@@ -77,6 +77,9 @@ let SBrick = (function() {
 	const MAX_QD   = 127; // Max Speed for QuickDrive
 	const MAX_VOLT = 9;   // Max Voltage = Full battery
 
+	// Times in milliseconds
+	const T_PVM = 500; // Time delay for PVM completion: the registry is update approximately 5 times per second (must be > 200ms)
+
 	// Sbrick class definition
 	class SBrick {
 
@@ -674,6 +677,8 @@ let SBrick = (function() {
 							this._log( "PVM set" + ( srt=="" ? " OFF" : srt ) );
 						});
 					});
+					// PVM has a delay before start to collect actual data
+					return this._delay(T_PVM);
 				}
 				return false;
 			});
@@ -748,7 +753,17 @@ let SBrick = (function() {
 		}
 
 		/**
-		* trigger event on body to notify listeners that a port's values have changed
+		* Delay promise
+		* @param {number} t - time in milliseconds
+		*/
+		_delay(t) {
+			return new Promise(function(resolve) {
+		 		setTimeout(resolve, t)
+		 	});
+		}
+
+		/**
+		* Trigger event on body to notify listeners that a port's values have changed
 		* @param {object} portData - The data ({portId, power, direction}) for the port that was changed
 		* @returns {undefined}
 		*/
