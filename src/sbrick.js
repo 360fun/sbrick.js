@@ -782,28 +782,26 @@ let SBrick = (function() {
 		}
 
 		/**
-		* check if no port is busy
+		* Check if ports are busy
 		* @returns {boolean}
 		*/
-		_allPortsAreIdle() {
+		_portsIdle(ports) {
 			let allAreIdle = true;
-			this.ports.forEach((port) => {
-				if (port.busy) {
+			ports.forEach( (port) => {
+				if (this.ports[port].busy) {
 					allAreIdle = false;
 				}
 			});
-			
 			return allAreIdle;
 		}
-
 
 		/**
 		* Set all ports to busy
 		* @returns {undefined}
 		*/
-		_setAllPortsBusy() {
-			this.ports.forEach((port) => {
-				port.busy = true;
+		_setPortsBusy(ports, status) {
+			ports.forEach( (port) => {
+				this.ports[port].busy = status;
 			});
 		};
 
