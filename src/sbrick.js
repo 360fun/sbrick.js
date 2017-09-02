@@ -735,6 +735,7 @@ let SBrick = (function() {
 					portId:    portId,
 					direction: port.direction,
 					power:     port.power,
+					mode:      port.mode
 				};
 			return data;
 		}
