@@ -66,6 +66,7 @@ let SBrick = (function() {
 	// Port Mode
 	const INPUT  = 'input';
 	const OUTPUT = 'output';
+	const BREAK  = 'break';
 
 	// Direction
 	const CLOCKWISE        = 0x00; // Clockwise
@@ -430,27 +431,31 @@ let SBrick = (function() {
 				portIds.forEach( (portId) => {
 					array.push( {
 						portId: portId,
-						mode: OUTPUT
+						mode: BREAK
 					} );
 				});
 				return this._pvm( array );
 			})
 			.then( ()=> {
-				if( !Array.isArray(portIds) ) {
-					portIds = [ portIds ];
-				}
-				let command = [ CMD_BREAK ];
+				let portsToUpdate = [];
 				// update object values and build the command
 				portIds.forEach( (portId) => {
-					this.ports[portId].power = 0;
-					command.push(portId);
+					let port = this.ports[portId];
+					port.power = 0;
+					if(!port.busy) {
+						portsToUpdate.push(portId);
+					}
 				});
-				this.queue.add( () => {
-					return this.webbluetooth.writeCharacteristicValue(
-						UUID_CHARACTERISTIC_REMOTECONTROL,
-						new Uint8Array( command )
-					);
-				});
+				if( portsToUpdate.length ) {
+					this._setPortsBusy(portsToUpdate, true);
+					this.queue.add( () => {
+						this._setPortsBusy(portsToUpdate, false);
+						return this.webbluetooth.writeCharacteristicValue(
+							UUID_CHARACTERISTIC_REMOTECONTROL,
+							new Uint8Array( [ CMD_BREAK ].concat(portsToUpdate) )
+						);
+					});
+				}
 			})
 			.then( () => {
 				// all went well, return an array with the channels and the settings we just applied
@@ -520,11 +525,21 @@ let SBrick = (function() {
 				} else {
 					reject('wrong input');
 				}
-			}).then( ()=> {
-				return this._pvm( { portId: portId, mode:INPUT } );
-			}).then( ()=> {
+			}).then( () => {
+				let newPortStatus = { portId: portId, mode:INPUT };
+				// reset the port if is in "break mode" (short circuited) or driving before activate PVM
+				if(this.ports[portId].mode===BREAK || this.ports[portId].power!=0) {
+					return this.drive(portId,CLOCKWISE,0)
+					.then( () => {
+						return this._pvm( newPortStatus );
+					} );
+				} else {
+					return this._pvm( newPortStatus );
+				}
+			}).then( () => {
 				let channels = this._getPortChannels(portId);
-				return this._adc([CMD_ADC_VOLT].concat(channels)).then( data => {
+				return this._adc([CMD_ADC_VOLT].concat(channels))
+				.then( data => {
 					let arrayData = [];
 					for (let i = 0; i < data.byteLength; i+=2) {
 						arrayData.push( data.getUint16(i, true) );
