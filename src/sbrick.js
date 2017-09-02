@@ -78,6 +78,7 @@ let SBrick = (function() {
 	const MAX_VOLT = 9;   // Max Voltage = Full battery
 
 	// Times in milliseconds
+	const T_KA  = 300; // Time interval for the keepalive loop (must be < 500ms - watchdog default)
 	const T_PVM = 500; // Time delay for PVM completion: the registry is update approximately 5 times per second (must be > 200ms)
 
 	// Sbrick class definition
@@ -605,7 +606,7 @@ let SBrick = (function() {
 						);
 					} );
 				}
-			}, 300);
+			}, T_KA);
 		}
 
 		/**
