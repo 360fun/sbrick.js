@@ -286,16 +286,16 @@ let SBrick = (function() {
 			if (typeof portObj !== 'object') {
 				// the old version with 3 params was used
 				portObj = {
-					portId: 	arguments[0],
-					direction: 	arguments[1] || CLOCKWISE,
-					power: 		arguments[2]
+					portId: 	  arguments[0],
+					direction: 	arguments[1],
+					power: 		  arguments[2]
 				};
 				this._log('Calling drive with 3 arguments is deprecated: use 1 object {portId, direction, power} instead.');
 			}
 
-			const portId = portObj.portId,
-				direction = portObj.direction || CLOCKWISE,
-				power = portObj.power;
+			const portId 		= portObj.portId,
+						direction = portObj.direction || CLOCKWISE,
+						power 		= ( portObj.power === undefined ) ? MAX : portObj.power
 
 			return new Promise( (resolve, reject) => {
 				if( portId !== undefined && direction !== undefined && power !== undefined ) {
