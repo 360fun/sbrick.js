@@ -79,8 +79,13 @@ Get basic SBrick Informations:
 	
 Sending a command is pretty easy and some constants will help the process:
 
-	SBRICK1.CHANNEL0-3 // Channels 0 to 3
-	SBRICK1.CW-CCW     // Clockwise and Counterclockwise
+	SBRICK1.PORT0 or SBRICK1.TOPLEFT     // Port 0
+	SBRICK1.PORT1 or SBRICK1.BOTTOMLEFT  // Port 1
+	SBRICK1.PORT2 or SBRICK1.TOPRIGHT    // Port 2
+	SBRICK1.PORT3 or SBRICK1.BOTTOMRIGHT // Port 3
+	
+	SBRICK1.CW         // Clockwise
+	SBRICK1.CCW        // Counterclockwise
 	SBRICK1.MIN        // Minimum power
 	SBRICK1.MAX	   // Maximum power for Drive (255)
 
@@ -101,32 +106,33 @@ Get the SBrick internal Temperature:
 		alert( temp + fahrenheit ? ' F°' : ' C°' );
 	});
 
-Get sensor data (SBrick Plus only!) - [work in progress](https://social.sbrick.com/forums/topic/511/-/view/post_id/5125):
+Get sensor data (SBrick Plus only!) - partially implemented: 
 
-	SBRICK1.getSensor(SBRICK1.PORT0)
-	.then( data => {
-		console.log( data );
+	let sensorType = "wedo"; // by default you get RAW data, if you give "wedo" you get data related to WeDo sensors
+	SBRICK1.getSensor(SBRICK1.PORT0, sensorType)
+	.then( sensorData => {
+		console.log( sensorData );
 	});
 	
-To send a Drive command is pretty easy, are just needed: channel, direction and power.
-For example, the Channel 0 (supposedly a motor) drives in clockwise direction at the maximum (255) speed:
+To send a Drive command is pretty easy, are just needed: port, direction and power.
+For example, the Port 0 (supposedly a motor) drives in clockwise direction at the maximum (255) speed:
 
-	SBRICK1.drive( SBRICK1.CHANNEL0, SBRICK1.CW, SBRICK1.MAX );
+	SBRICK1.drive( SBRICK1.PORT0, SBRICK1.CW, SBRICK1.MAX );
 	
-QuickDrive permits to send up to 4 Drive commands at the same instant, without any delay between the channels.
+QuickDrive permits to send up to 4 Drive commands at the same instant, without any delay between the ports.
 It accepts an Array of Objects (1 to 4) or a single Object (but better use Drive in that case).
-In the following example Channel 0 and 1 start to drive both in clockwise direction at the max speed:
+In the following example Port 0 and 1 start to drive both in clockwise direction at the max speed:
 
 	SBRICK1.quickDrive( [
-		{ channel: SBRICK1.CHANNEL0, direction: SBRICK1.CW, power: SBRICK1.MAX }
-		{ channel: SBRICK1.CHANNEL1, direction: SBRICK1.CW, power: SBRICK1.MAX }
+		{ port: SBRICK1.TOPLEFT,    direction: SBRICK1.CW, power: SBRICK1.MAX }
+		{ port: SBRICK1.BOTTOMLEFT, direction: SBRICK1.CW, power: SBRICK1.MAX }
 	] );
 	
-Stop a specific Channel.
+Stop a specific Port.
 	
-	SBRICK1.stop( SBrick.CHANNEL0 ); //stops Channel 0
+	SBRICK1.stop( SBrick.PORT0 ); //stops Port 0
 	
-Stop all Channels at once.
+Stop all Ports at once.
 	
 	SBRICK1.stopAll();
 	
